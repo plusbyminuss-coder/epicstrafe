@@ -25,7 +25,7 @@ This is the quickest way to work on the design. In development, Vite proxies pub
 
 ```bash
 git clone https://github.com/plusbyminuss-coder/epicstrafe.git
-cd epicstrafe
+cd epicstrafe-main
 npm install
 npm run build:shared
 npm run dev:frontend
