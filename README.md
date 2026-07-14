@@ -132,7 +132,9 @@ npm run start           # Start the production Express server
 
 ## Contributing
 
-Issues and pull requests are welcome. Read [`CONTRIBUTING.md`](CONTRIBUTING.md) before submitting changes.
+Issues and pull requests are welcome. Install dependencies with `npm install`, keep changes focused, and run `npm run lint` and `npm run build` before submitting. Do not commit credentials, `.env` files, databases, generated builds, or dependency folders.
+
+For security issues involving authentication, credentials, cookies, or databases, contact the repository owner privately rather than opening a public issue. Never include live secrets in a report.
 
 ## Credits and license
 
