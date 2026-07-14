@@ -1,8 +1,8 @@
 # EpicStrafe
 
-An open-source interface for browsing StrafesNET Roblox bhop and surf users, maps, records, ranks, comparisons, and WebGPU replays.
+Open source website for browsing StrafesNET.
 
-This project is based on the original MIT-licensed [`fiveman1/strafes-site`](https://github.com/fiveman1/strafes-site). The refreshed interface and replay reliability improvements were made by **@quadrics on Discord**.
+This repository is based on the original MIT-licensed [`fiveman1/strafes-site`](https://github.com/fiveman1/strafes-site). The refreshed version and improvements were made by **@quadrics on Discord**.
 
 ## Features
 
