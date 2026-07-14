@@ -1,0 +1,23 @@
+{
+    "name": "shared",
+    "version": "1.0.0",
+    "private": true,
+    "main": "./dist/index.js",
+    "module": "./dist/index.mjs",
+    "exports": {
+        ".": {
+            "types": "./dist/index.d.ts",
+            "import": "./dist/index.mjs"
+        }
+    },
+    "scripts": {
+        "dev": "tsup src/index.ts --format esm --dts --watch --no-clean",
+        "build": "tsup src/index.ts --format esm --dts --clean --minify"
+    },
+    "devDependencies": {
+        "eslint": "^9.39.2",
+        "typescript": "^5.8.3",
+        "typescript-eslint": "^8.54.0",
+        "tsup": "^8.5.1"
+    }
+}

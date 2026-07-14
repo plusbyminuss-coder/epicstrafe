@@ -1,0 +1,21 @@
+{
+    "compilerOptions": {
+        "target": "esnext",
+        "outDir": "./dist",
+        "rootDir": "./src",
+        "skipLibCheck": true,
+        "esModuleInterop": true,
+        "allowSyntheticDefaultImports": true,
+        "strict": true,
+        "noFallthroughCasesInSwitch": true,
+        "module": "nodenext",
+        "moduleResolution": "nodenext",
+        "preserveWatchOutput": true
+    },
+    "include": [
+        "./src/**/*"
+    ],
+    "exclude": [
+        "dist"
+    ]
+}

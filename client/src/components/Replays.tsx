@@ -1,0 +1,1004 @@
+import Box from "@mui/material/Box";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import init, { Bvh, CompleteBot, CompleteMap, Graphics, PlaybackHead, setup_graphics } from "../bot_player/strafesnet_roblox_bot_player_wasm_module";
+import AutoSizer from "react-virtualized-auto-sizer";
+import PlaybackOverlay from "./playback/PlaybackOverlay";
+import { formatCountryCode, formatCourse, formatDiff, formatGame, formatPlacement, formatStyle, formatTier, formatTime, GameControls, MAIN_COURSE, Replay } from "shared";
+import { Link as RouterLink, useOutletContext, useParams } from "react-router";
+import { getBotFileResponse, getMapFileResponse } from "../api/api";
+import Typography from "@mui/material/Typography";
+import CircularProgress from "@mui/material/CircularProgress";
+import MapThumb from "./displays/MapThumb";
+import { ContextParams, getGameColor, getStyleColor, InputState } from "../common/common";
+import UserAvatar from "./displays/UserAvatar";
+import { darken, useTheme } from "@mui/material/styles";
+import useMediaQuery from "@mui/material/useMediaQuery";
+import DiffDisplay from "./displays/DiffDisplay";
+import Link from "@mui/material/Link";
+import Alert from "@mui/material/Alert";
+import DateDisplay from "./displays/DateDisplay";
+import { getMapTierColor } from "../common/colors";
+import ReactCountryFlag from "react-country-flag";
+import AccountBoxIcon from '@mui/icons-material/AccountBox';
+import { clamp } from "../common/utils";
+import { useQuery } from "@tanstack/react-query";
+import { queries } from "../api/queries";
+
+const ASPECT_RATIO = 16 / 9;
+const REPLAY_READ_TIMEOUT = 20000;
+
+function getPlayerHeight(width: number, height: number) {
+    if (width / height > ASPECT_RATIO) {
+        return height;
+    }
+    else {
+        return width / ASPECT_RATIO;
+    }
+}
+
+function getPlayerWidth(width: number, height: number) {
+    if (width / height > ASPECT_RATIO) {
+        return height * ASPECT_RATIO;
+    }
+    else {
+        return width;
+    }
+}
+
+function handleCanvasSize(width: number, height: number, playback: PlaybackHead, graphics: Graphics) {
+    const screenWidth = getPlayerWidth(width, height) * window.devicePixelRatio;
+    const screenHeight = getPlayerHeight(width, height) * window.devicePixelRatio;
+    const fov_y = playback.get_fov_slope_y();
+    const fov_x = (fov_y * screenWidth) / screenHeight;
+    graphics.resize(screenWidth, screenHeight, fov_x, fov_y);
+}
+
+function getSafeTime(time: number, bot: CompleteBot) {
+    return clamp(time, 0, bot.duration() - 0.0001);
+}
+
+function getReplayRunDuration(replay: Replay, bot: CompleteBot) {
+    try {
+        return bot.run_duration(replay.course);
+    }
+    catch (err) {
+        console.warn(err);
+        return replay.time / 1000;
+    }
+}
+
+function getMapTitle(replay: Replay) {
+    if (replay.course === MAIN_COURSE) {
+        return replay.map;
+    }
+    return `${replay.map} (${formatCourse(replay.course, true)})`;
+}
+
+function chunksToArray(chunks: Uint8Array[], length: number) {
+    const chunksAll = new Uint8Array(length);
+    let position = 0;
+    for (const chunk of chunks) {
+        chunksAll.set(chunk, position);
+        position += chunk.length;
+    }
+    return chunksAll;
+}
+
+const controlToState = new Map([
+    [GameControls.MoveLeft, InputState.MoveLeft],
+    [GameControls.MoveRight, InputState.MoveRight],
+    [GameControls.MoveForward, InputState.MoveForward],
+    [GameControls.MoveBack, InputState.MoveBack],
+    [GameControls.Jump, InputState.Jump]
+]);
+
+function updateInputDisplay(input: HTMLDivElement, playback: PlaybackHead) {
+    const controls = playback.get_game_controls();
+    controlToState.forEach((state, control) => {
+        const isActive = (controls & control) > 0;
+        const element = input.querySelector(`#${state}`);
+        if (element) {
+            if (isActive) {
+                element.classList.add("inputActive");
+            }
+            else {
+                element.classList.remove("inputActive");
+            }
+        }
+    });
+
+    const yawDelta = playback.get_angles_yaw_delta();
+    const lookLeftElem = input.querySelector(`#${InputState.LookLeft}`);
+    const lookRightElem = input.querySelector(`#${InputState.LookRight}`);
+    if (lookLeftElem) {
+        if (yawDelta > 0) {
+            lookLeftElem.classList.add("inputActive");
+        }
+        else {
+            lookLeftElem.classList.remove("inputActive");
+        }
+    }
+    if (lookRightElem) {
+        if (yawDelta < 0) {
+            lookRightElem.classList.add("inputActive");
+        }
+        else {
+            lookRightElem.classList.remove("inputActive");
+        }
+    }
+}
+
+const FOOTER_HEIGHT = 156;
+
+function updateDiffDisplay(diffTimeElement: HTMLElement, diffSpeedElement: HTMLElement, timeDiff: number, speedDiff: number) {
+    const diffMs = Math.round(timeDiff * 1000);
+    const timePos = diffMs >= 0;
+    let timeText = timePos ? "+" : "-";
+    timeText += formatDiff(Math.abs(diffMs));
+    diffTimeElement.innerText = timeText;
+    if (timePos) {
+        diffTimeElement.classList.add("better");
+        diffTimeElement.classList.remove("worse");
+        
+    }
+    else {
+        diffTimeElement.classList.remove("better");
+        diffTimeElement.classList.add("worse");
+    }
+    
+    const speedPos = speedDiff >= 0;
+    let speedText = speedPos ? "+" : "";
+    speedText += speedDiff.toFixed(2) + " u/s";
+    diffSpeedElement.innerText = speedText;
+    if (speedPos) {
+        diffSpeedElement.classList.remove("better");
+        diffSpeedElement.classList.add("worse");
+    }
+    else {
+        diffSpeedElement.classList.add("better");
+        diffSpeedElement.classList.remove("worse");
+    }
+}
+
+async function readWithProgress(res: Response, setLength: (len: number) => void, setReceived: (rec: number) => void) {
+    setReceived(0);
+    setLength(+(res.headers.get("Content-Length") ?? 0));
+
+    if (!res.body) {
+        return new Uint8Array(await res.arrayBuffer());
+    }
+
+    const reader = res.body.getReader();
+    const chunks: Uint8Array[] = [];
+    let received = 0;
+
+    try {
+        while (true) {
+            let timeout = 0;
+            const read = reader.read();
+            const stalled = new Promise<never>((_, reject) => {
+                timeout = window.setTimeout(() => reject(new Error("Replay asset download timed out.")), REPLAY_READ_TIMEOUT);
+            });
+            const { done, value } = await Promise.race([read, stalled]);
+            window.clearTimeout(timeout);
+
+            if (done) break;
+
+            chunks.push(value);
+            received += value.byteLength;
+            setReceived(received);
+        }
+    }
+    catch (error) {
+        await reader.cancel().catch(() => undefined);
+        throw error;
+    }
+    finally {
+        reader.releaseLock();
+    }
+
+    return chunksToArray(chunks, received);
+}
+
+function Replays() {
+    const { id } = useParams() as { id: string };
+    const { maps, loginUser } = useOutletContext() as ContextParams;
+
+    const theme = useTheme();
+    const smallScreen = useMediaQuery("(max-width: 600px)");
+
+    const replayQuery = useQuery(queries.replays.replay(id));
+    const replay = replayQuery.data;
+    
+    const [ duration, setDuration ] = useState(0);
+    const [ botOffset, setBotOffset ] = useState(0);
+    const [ playbackSpeed, setPlaybackSpeed ] = useState(1.0);
+    const [ playbackTime, setPlaybackTime ] = useState(-1);
+    const [ paused, setPaused ] = useState(false);
+    const [ fullscreen, setFullscreen ] = useState(false);
+    const [ loading, setLoading ] = useState(true);
+    const [ error, setErrorState ] = useState("");
+    const [ mapFileLength, setMapFileLength ] = useState(0);
+    const [ mapFileReceived, setMapFileReceived ] = useState(0);
+    const [ botFileLength, setBotFileLength ] = useState(0);
+    const [ botFileReceived, setBotFileReceived ] = useState(0);
+    const [ diffBotFileLength, setDiffBotFileLength ] = useState(0);
+    const [ diffBotFileReceived, setDiffBotFileReceived ] = useState(0);
+    const [ diffReady, setDiffReady ] = useState(false);
+
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+    const playerRef = useRef<HTMLDivElement>(null);
+    const speedTextRef = useRef<HTMLSpanElement>(null);
+    const inputContainerRef = useRef<HTMLDivElement>(null);
+    const diffTimeTextRef = useRef<HTMLElement>(null);
+    const diffSpeedTextRef = useRef<HTMLElement>(null);
+    const graphicsRef = useRef<Graphics>(null);
+    const botRef = useRef<CompleteBot>(null);
+    const diffBotRef = useRef<CompleteBot>(null);
+    const diffBvhRef = useRef<Bvh>(null);
+    const playbackRef = useRef<PlaybackHead>(null);
+    const diffPlaybackRef = useRef<PlaybackHead>(null);
+    const animTimer = useRef(0);
+    const sessionTimer = useRef(0);
+
+    const setError = useCallback((error: string) => {
+        setErrorState(error);
+        setLoading(false);
+        playbackRef.current = null;
+        graphicsRef.current = null;
+        botRef.current = null;
+    }, []);
+
+    useEffect(() => {
+        if (replay) {
+            const placementText = replay.placement === 1 ? "WR" : `${formatPlacement(replay.placement)} place`;
+            document.title = `${getMapTitle(replay)} in ${formatTime(replay.time)} by ${replay.username} (${placementText}) - replays - strafes`;
+        }
+        else {
+            document.title = `replays - strafes`;
+        }
+    }, [replay]);
+
+    useEffect(() => {
+        if (replayQuery.isSuccess || replayQuery.isError) {
+            if (!replay) {
+                setError(`Invalid replay (ID: ${id}).`);
+                return;
+            }
+            if (!replay.hasBot) {
+                setError("No replay exists for this time.");
+                return;
+            }
+        }
+        else if (!replay) {
+            return;
+        }
+
+        let isCanceled = false;
+        setMapFileReceived(0);
+        setBotFileReceived(0);
+        setDiffBotFileReceived(0);
+        setDiffReady(false);
+        setLoading(true);
+        
+        const promise = async () => {
+            if (!("gpu" in navigator) || await navigator.gpu.requestAdapter() === null) {
+                setError("This device does not support WebGPU. Make sure you have hardware acceleration enabled.");
+                return;
+            }
+            
+            await init();
+
+            if (isCanceled) return;
+
+            const mapPromise = getMapFileResponse(replay.mapId);
+            const botPromise = getBotFileResponse(replay.id);
+            const mapRes = await mapPromise;
+            const botRes = await botPromise;
+
+            if (!mapRes) {
+                setError("Couldn't load map file.");
+                return;
+            }
+
+            if (!botRes) {
+                setError("Couldn't load bot file.");
+                return;
+            }
+
+            if (isCanceled) return;
+            
+            const mapFilePromise = readWithProgress(mapRes, setMapFileLength, setMapFileReceived);
+            const botFilePromise = readWithProgress(botRes, setBotFileLength, setBotFileReceived);
+
+            const mapFile = await mapFilePromise;
+            const botFile = await botFilePromise;
+
+            if (isCanceled) return;
+
+            const canvas = canvasRef.current;
+            if (!canvas) {
+                setError("Couldn't setup bot playback.");
+                return;
+            }
+
+            try {
+                const map = new CompleteMap(mapFile);
+                const bot = new CompleteBot(botFile);
+                const playback = new PlaybackHead(bot, 0);
+                const graphics = await setup_graphics(canvas);
+
+                playbackRef.current = playback;
+                graphicsRef.current = graphics;
+                botRef.current = bot;
+
+                const width = canvas.clientWidth;
+                const height = canvas.clientHeight;
+                handleCanvasSize(width, height, playback, graphics);
+
+                playback.advance_time(bot, 0);
+                playback.set_head_time(bot, 0, 0);
+                graphics.change_map(map);
+
+                const botDuration = bot.duration();
+                const runDuration = getReplayRunDuration(replay, bot);
+                setDuration(runDuration);
+                const offset = botDuration - runDuration;
+                setBotOffset(offset);
+                setPlaybackTime(-offset);
+                setLoading(false);
+
+                // Comparison data is optional and can be considerably slower than
+                // the main replay. Load it after playback is usable so it can never
+                // hold the player on the loading screen.
+                if (replay.compareTimeId) {
+                    void (async () => {
+                        const diffBotRes = await getBotFileResponse(replay.compareTimeId!);
+                        if (!diffBotRes || isCanceled) return;
+
+                        const diffBotFile = await readWithProgress(diffBotRes, setDiffBotFileLength, setDiffBotFileReceived);
+                        if (isCanceled) return;
+
+                        try {
+                            const diffBot = new CompleteBot(diffBotFile);
+                            diffBotRef.current = diffBot;
+                            diffBvhRef.current = new Bvh(diffBot);
+                            diffPlaybackRef.current = new PlaybackHead(diffBot, 0);
+                            setDiffReady(true);
+                        }
+                        catch (error) {
+                            console.warn("Couldn't initialize comparison replay", error);
+                        }
+                    })().catch((error) => console.warn("Couldn't load comparison replay", error));
+                }
+            }
+            catch (err) {
+                console.error(err);
+                setError(err instanceof Error ? err.message : "Something went wrong trying to initialize the playback engine.");
+            }
+        };
+        promise().catch((err) => {
+            if (!isCanceled) {
+                console.error(err);
+                setError(err instanceof Error ? err.message : "Something went wrong trying to load the replay.");
+            }
+        });
+
+        return () => { 
+            isCanceled = true;
+            if (playbackRef.current) {
+                playbackRef.current.free();
+                playbackRef.current = null;
+            }
+            if (graphicsRef.current) {
+                graphicsRef.current.free();
+                graphicsRef.current = null;
+            }
+            if (botRef.current) {
+                botRef.current.free();
+                botRef.current = null;
+            }
+            if (diffPlaybackRef.current) {
+                diffPlaybackRef.current.free();
+                diffPlaybackRef.current = null;
+            }
+            if (diffBvhRef.current) {
+                diffBvhRef.current.free();
+                diffBvhRef.current = null;
+            }
+            if (diffBotRef.current) {
+                diffBotRef.current.free();
+                diffBotRef.current = null;
+            }
+        };
+    }, [id, replay, replayQuery.isError, replayQuery.isSuccess, setError]);
+
+    useLayoutEffect(() => {
+        let animationId: number;
+
+        if (replay?.course === undefined) {
+            return;
+        }
+
+        const animate = (timeMs: number) => {
+            const time = timeMs / 1000;
+            animationId = requestAnimationFrame(animate);
+
+            const playback = playbackRef.current;
+            const bot = botRef.current;
+            const graphics = graphicsRef.current;
+            const speedText = speedTextRef.current;
+            const input = inputContainerRef.current;
+            
+            if (playback && bot && graphics && speedText && input) {
+                const elapsed = time - animTimer.current;
+                const newSessionTime = sessionTimer.current + elapsed;
+                try {
+                    playback.advance_time(bot, newSessionTime);
+                    graphics.render(bot, playback, newSessionTime);
+                    const speed = playback.get_speed(bot, newSessionTime);
+                    const newText = speed.toFixed(2).toString();
+                    if (speedText.innerText !== newText) {
+                        speedText.innerText = newText;
+                    }
+                    updateInputDisplay(input, playback);
+
+                    const diffBot = diffBotRef.current;
+                    const bvh = diffBvhRef.current;
+                    const diffPlayback = diffPlaybackRef.current;
+                    const diffTimeElement = diffTimeTextRef.current;
+                    const diffSpeedElement = diffSpeedTextRef.current;
+
+                    if (diffBot && bvh && diffPlayback && diffTimeElement && diffSpeedElement) {
+                        const pos = playback.get_position(bot, newSessionTime);
+                        const diffPlaybackTime = bvh.closest_time_to_point(diffBot, pos);
+                        if (diffPlaybackTime !== undefined) {
+                            diffPlayback.set_head_time(diffBot, newSessionTime, getSafeTime(diffPlaybackTime, diffBot));
+                            const botTime = playback.get_run_time(bot, newSessionTime, replay.course) ?? 0;
+                            const diffBotTime = diffPlayback.get_run_time(diffBot, newSessionTime, replay.course) ?? 0;
+                            const timeDiff = botTime - diffBotTime;
+                            const diffBotSpeed = diffPlayback.get_speed(diffBot, newSessionTime);
+                            const speedDiff = speed - diffBotSpeed;
+
+                            updateDiffDisplay(diffTimeElement, diffSpeedElement, timeDiff, speedDiff);
+                        }
+                    }
+                }
+                catch (err) {
+                    console.error(err);
+                    setError("Something went wrong while trying to render the replay.");
+                }
+
+                sessionTimer.current = newSessionTime;
+            }
+
+            animTimer.current = time;
+        }
+
+        animationId = requestAnimationFrame(animate);
+        return () => cancelAnimationFrame(animationId);
+    }, [setError, replay?.course]);
+
+    // Update current run timer on a 17ms interval
+    // Separated from animation loop for *important* performance reasons
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const playback = playbackRef.current;
+            if (playback) {
+                const headTime = playback.get_head_time(sessionTimer.current);
+                const curPlayerTime = Math.min(headTime - botOffset, duration);
+                setPlaybackTime(curPlayerTime);
+            }
+        }, 17);
+
+        return () => clearInterval(interval);
+    }, [botOffset, duration]);
+
+    const onResize = useCallback((width: number, height: number) => {
+        const playback = playbackRef.current;
+        const graphics = graphicsRef.current;
+        if (playback && graphics) {
+            handleCanvasSize(width, height, playback, graphics);
+        }
+    }, []);
+
+    const onSetPlayback = useCallback((time: number) => {
+        setPlaybackTime(time);
+        const playback = playbackRef.current;
+        const bot = botRef.current;
+        if (playback && bot) {
+            playback.set_head_time(bot, sessionTimer.current, getSafeTime(time + botOffset, bot));
+            if (!paused) {
+                playback.set_paused(sessionTimer.current, false);
+            }
+        }
+    }, [botOffset, paused]);
+
+    const onDragPlayback = useCallback((time: number) => {
+        setPlaybackTime(time);
+        const playback = playbackRef.current;
+        const bot = botRef.current;
+        if (playback && bot) {
+            playback.set_head_time(bot, sessionTimer.current, getSafeTime(time + botOffset, bot));
+            playback.set_paused(sessionTimer.current, true);
+        }
+    }, [botOffset]);
+
+    const onSeek = useCallback((offset: number) => {
+        const playback = playbackRef.current;
+        const bot = botRef.current;
+        if (playback && bot) {
+            const curTime = playback.get_head_time(sessionTimer.current);
+            const newTime = curTime + offset;
+            playback.set_head_time(bot, sessionTimer.current, getSafeTime(newTime, bot));
+        }
+    }, []);
+
+    const onReset = useCallback(() => {
+        const playback = playbackRef.current;
+        const bot = botRef.current;
+        if (playback && bot) {
+            playback.set_head_time(bot, sessionTimer.current, 0.0001);
+        }
+    }, []);
+
+    const onSetPause = useCallback((paused: boolean) => {
+        setPaused(paused);
+        const playback = playbackRef.current;
+        if (playback) {
+            playback.set_paused(sessionTimer.current, paused);
+        }
+    }, []);
+
+    const onFullscreen = useCallback((fullscreen: boolean) => {
+        setFullscreen(fullscreen);
+        if (fullscreen) {
+            playerRef.current?.requestFullscreen();
+        }
+        else if (document.fullscreenElement !== null) {
+            document.exitFullscreen();
+        }
+    }, []);
+
+    const onChangePlaybackSpeed = useCallback((speed: number) => {
+        setPlaybackSpeed(speed);
+        const playback = playbackRef.current;
+        if (playback) {
+            playback.set_scale(sessionTimer.current, speed);
+        }
+    }, []);
+
+    useEffect(() => {
+        const handler = () => {
+            if (!document.fullscreenElement) {
+                onFullscreen(false);
+            }
+        }
+        document.addEventListener("fullscreenchange", handler)
+
+        return () => {
+            document.removeEventListener("fullscreenchange", handler);
+        };
+    }, [onFullscreen]);
+
+    let downloadProgress = -1;
+    if (loading) {
+        let mapProgress = -1;
+        let botProgress = -1;
+        let diffBotProgress = -1;
+        
+        if (mapFileLength !== 0) {
+            mapProgress = mapFileReceived / mapFileLength;
+        }
+        
+        if (botFileLength !== 0) {
+            botProgress = botFileReceived / botFileLength;
+        }
+
+        if (diffBotFileLength !== 0) {
+            diffBotProgress = diffBotFileReceived / diffBotFileLength;
+        }
+
+        let progress = Math.min(mapProgress, botProgress);
+        if (diffBotProgress !== -1) {
+            progress = Math.min(progress, diffBotProgress);
+        }
+
+        if (progress !== -1) {
+            downloadProgress = progress;
+        }
+    }
+
+    let gameColor = "";
+    let styleColor = "";
+    if (replay) {
+        gameColor = getGameColor(replay.game, theme);
+        styleColor = getStyleColor(replay.style, theme);
+    }
+
+    let footerHeight = FOOTER_HEIGHT;
+    if (fullscreen) {
+        footerHeight = 0;
+    }
+
+    const thumbSize = FOOTER_HEIGHT - 20;
+    const mapLink = replay ? `/maps/${replay.mapId}?game=${replay.game}&style=${replay.style}&course=${replay.course}` : "";
+    const mapInfo = replay ? maps[replay.mapId] : undefined;
+    const tierColor = getMapTierColor(mapInfo?.tier);
+    const isCurrentUser = loginUser && replay?.userId === loginUser.userId;
+    const allowDiff = Boolean(replay?.compareTimeId && diffReady);
+
+    return (
+        <Box padding={smallScreen ? 0 : 0.5} flexGrow={1} display="flex" flexDirection="column" alignItems="center" justifyContent="center">
+            {error !== "" &&
+            <Alert severity="error" sx={{ mb: 1 }}>
+                {error}
+            </Alert>}
+            <Box 
+                ref={playerRef}
+                sx={{
+                    width: "100%",
+                    height: "100%",
+                    minHeight: "600px"
+                }}
+            >
+                <AutoSizer
+                    onResize={({ width, height }) => onResize(width, height - footerHeight)}
+                >
+                {({ width, height }) => {
+                    const playerWidth = getPlayerWidth(width, height - footerHeight);
+                    const playerHeight = getPlayerHeight(width, height - footerHeight);
+                    return (
+                    <Box
+                        display="flex"
+                        flexDirection="column"
+                        alignItems="center"
+                        justifyContent="center"
+                        style={{
+                            width: width,
+                            height: height
+                        }}
+                    >
+                        <Box
+                            position="relative"
+                            bgcolor="black"
+                            style={{
+                                width: playerWidth,
+                                height: playerHeight
+                            }}
+                        >
+                            <canvas
+                                ref={canvasRef}
+                                style={{
+                                    position: "absolute",
+                                    top: 0,
+                                    left: 0,
+                                    width: playerWidth,
+                                    height: playerHeight
+                                }}
+                            />
+                            <Box
+                                position="absolute"
+                                top={0}
+                                style={{
+                                    width: playerWidth,
+                                    height: playerHeight
+                                }}
+                            >
+                                <PlaybackOverlay 
+                                    time={playbackTime} 
+                                    duration={duration} 
+                                    paused={paused}
+                                    offset={botOffset}
+                                    fullscreen={fullscreen}
+                                    speed={playbackSpeed}
+                                    onDragPlayback={onDragPlayback} 
+                                    onSetPlayback={onSetPlayback} 
+                                    onSetPause={onSetPause}
+                                    onFullscreen={onFullscreen}
+                                    onSeek={onSeek}
+                                    onReset={onReset}
+                                    onSetSpeed={onChangePlaybackSpeed}
+                                    speedTextRef={speedTextRef}
+                                    playerHeight={playerHeight}
+                                    inputContainerRef={inputContainerRef}
+                                    loading={loading}
+                                    errorReplay={!!error}
+                                    diffSpeedTextRef={diffSpeedTextRef}
+                                    diffTimeTextRef={diffTimeTextRef}
+                                    allowDiff={allowDiff}
+                                />
+                            </Box>
+                            {(loading && !error) && 
+                            <Box
+                                position="absolute"
+                                top="50%"
+                                left="50%"
+                                display="flex"
+                                flexDirection="column"
+                                alignItems="center"
+                                justifyContent="center"
+                                sx={{ 
+                                    transform: "translate(-50%, -50%)",
+                                    userSelect: "none"
+                                }}
+                            >
+                                <CircularProgress size={Math.max(40, Math.round(playerHeight / 10))} />
+                                <Box 
+                                    mt={1}
+                                    display="flex"
+                                    alignItems="center"
+                                    justifyContent="center"
+                                    height="32px"
+                                >
+                                    {downloadProgress !== -1 &&
+                                    <Typography variant="body1">
+                                        {Math.round(downloadProgress * 100)}%
+                                    </Typography>}
+                                </Box>
+                            </Box>}
+                        </Box>
+                        <Box 
+                            display={fullscreen ? "none" : "flex"}
+                            flexDirection="row"
+                            pt={1}
+                            pb={1}
+                            style={{ width: playerWidth }}
+                            minHeight={FOOTER_HEIGHT}
+                        >
+                            {replay && 
+                            <>
+                            {!smallScreen &&
+                            <Box 
+                                display="flex" 
+                                mr={1.5}
+                            >
+                                <Link
+                                    display="flex"
+                                    alignItems="center"
+                                    underline="none"
+                                    component={RouterLink}
+                                    to={mapLink}
+                                >
+                                    <Box 
+                                        width={thumbSize} 
+                                        height={thumbSize}
+                                        overflow="hidden"
+                                        sx={{
+                                            borderRadius: "4px",
+                                            ":hover": {
+                                                ".mapThumb": {
+                                                    transform: "scale(1.08)"
+                                                }
+                                            }
+                                        }}
+                                    >
+                                        <MapThumb size={thumbSize} map={mapInfo} className="mapThumb" useLargeThumb sx={{ borderRadius: "4px", transition: "transform .2s ease" }} />
+                                    </Box>
+                                </Link>
+                            </Box>}
+                            <Box 
+                                display="flex" 
+                                flexDirection="column" 
+                                flexGrow={1}
+                                overflow="hidden"
+                                sx={{
+                                    "p": {
+                                        overflowWrap: "break-word", 
+                                        wordBreak: "break-word", 
+                                        whiteSpace: "normal", 
+                                        textWrap: "wrap"
+                                    }
+                                }}
+                            >
+                                <Box 
+                                    display="inline-flex" 
+                                    alignItems="center" 
+                                >
+                                    {smallScreen &&
+                                    <Link
+                                        underline="none"
+                                        component={RouterLink}
+                                        to={mapLink}
+                                        mr={1.5}
+                                    >
+                                        <Box 
+                                            width={48} 
+                                            height={48}
+                                            overflow="hidden"
+                                            sx={{
+                                                borderRadius: "4px",
+                                                ":hover": {
+                                                    "img": {
+                                                        transform: "scale(1.08)"
+                                                    }
+                                                }
+                                            }}
+                                        >
+                                            <MapThumb size={48} map={mapInfo} useLargeThumb sx={{ borderRadius: "4px", transition: "transform .2s ease" }} />
+                                        </Box>
+                                    </Link>}
+                                    <Link 
+                                        display="inline-flex" 
+                                        alignItems="center"
+                                        underline="none"
+                                        component={RouterLink}
+                                        color="textPrimary"
+                                        to={mapLink}
+                                        sx={{
+                                            textDecoration: "none",
+                                            ":hover": {
+                                                "& .map-name": {
+                                                    textDecoration: "underline"
+                                                }
+                                            }
+                                        }}
+                                    >
+                                        <Typography 
+                                            variant="h5"
+                                            display="inline-block"
+                                            className="map-name"
+                                            lineHeight={1.4}
+                                        >
+                                            {getMapTitle(replay)}
+                                        </Typography>
+                                    </Link>
+                                    <Typography 
+                                        lineHeight={1.0}
+                                        variant="caption"
+                                        fontWeight="bold"
+                                        className="tier"
+                                        ml={0.75}
+                                        sx={{
+                                            padding: 0.3,
+                                            backgroundColor: darken(tierColor, 0.4),
+                                            textAlign: "center",
+                                            color: "white",
+                                            textShadow: "black 1px 1px 1px",
+                                            borderRadius: "6px",
+                                            border: 1,
+                                            borderColor: tierColor,
+                                            overflowWrap: "normal", 
+                                            wordBreak: "normal", 
+                                            whiteSpace: "normal", 
+                                            textWrap: "auto"
+                                        }}
+                                    >
+                                        {formatTier(mapInfo?.tier, true)}
+                                    </Typography>
+                                </Box>
+                                <Box
+                                    display="inline-flex" 
+                                    alignItems="center" 
+                                    mt={smallScreen ? 1 : 0.25}
+                                >
+                                    <Typography
+                                        lineHeight={1.0}
+                                        fontWeight="bold" 
+                                        variant="caption"
+                                        sx={{
+                                            padding: 0.3,
+                                            backgroundColor: gameColor,
+                                            textAlign: "center",
+                                            color: "white",
+                                            textShadow: "black 1px 1px 1px",
+                                            borderRadius: "6px",
+                                            border: 1,
+                                            borderColor: gameColor
+                                        }}
+                                    >
+                                        {formatGame(replay.game)}
+                                    </Typography>
+                                    <Typography
+                                        lineHeight={1.0}
+                                        fontWeight="bold" 
+                                        variant="caption"
+                                        ml={0.5}
+                                        sx={{
+                                            padding: 0.3,
+                                            backgroundColor: styleColor,
+                                            textAlign: "center",
+                                            color: "white",
+                                            textShadow: "black 1px 1px 1px",
+                                            borderRadius: "6px",
+                                            border: 1,
+                                            borderColor: styleColor
+                                        }}
+                                    >
+                                        {formatStyle(replay.style)}
+                                    </Typography>
+                                </Box>
+                                <Box 
+                                    mt={1}
+                                    display="inline-flex" 
+                                    alignItems="center"
+                                >
+                                    <Link 
+                                        display="inline-flex" 
+                                        alignItems="center"
+                                        underline="none"
+                                        component={RouterLink}
+                                        color="textPrimary"
+                                        to={`/users/${replay.userId}?game=${replay.game}&style=${replay.style}`}
+                                        sx={{
+                                            textDecoration: "none",
+                                            ":hover": {
+                                                "p": {
+                                                    textDecoration: "underline"
+                                                }
+                                            }
+                                        }}
+                                    >
+                                        <UserAvatar username={replay.username} userThumb={replay.userThumb} sx={{width: "24px", height: "24px"}} />
+                                        <Typography 
+                                            variant="body1" 
+                                            ml={0.75} 
+                                            display="inline-block"
+                                        >
+                                            @{replay.username}
+                                        </Typography>
+                                        
+                                    </Link>
+                                    {replay.userCountry &&
+                                    <ReactCountryFlag style={{marginLeft: 6}} title={formatCountryCode(replay.userCountry)} countryCode={replay.userCountry} svg />}
+                                    {isCurrentUser &&
+                                    <Box display="flex" title="You">
+                                        <AccountBoxIcon sx={{marginLeft: 0.75, fontSize: 20}} htmlColor={theme.palette.secondary.main} /> 
+                                    </Box>}
+                                </Box>
+                                <Box display="flex" alignItems="center" mt={0.5}>
+                                    <Typography 
+                                        variant="body1"
+                                        display="inline-block" 
+                                        fontFamily="monospace"
+                                    >
+                                        {formatPlacement(replay.placement)}
+                                    </Typography>
+                                    <Typography 
+                                        variant="body1"
+                                        display="inline-block"
+                                        ml={0.75}
+                                        mr={0.75}
+                                    >
+                                        -
+                                    </Typography>
+                                    <Typography 
+                                        variant="body1"
+                                        display="inline-block"
+                                        mr={0.75}
+                                    >
+                                        {formatTime(replay.time)}
+                                    </Typography>
+                                    <DiffDisplay ms={replay.time} diff={replay.wrDiff} />
+                                </Box>
+                                <Box 
+                                    display="inline-flex" 
+                                    flexDirection="row"
+                                    alignItems="center"
+                                    justifyContent="space-between"
+                                    mt={0.25}
+                                >
+                                    <Typography
+                                        variant="body2"
+                                        fontWeight="bold"
+                                        display="inline-block" 
+                                    >
+                                        {replay.views === 1 ? "1 view" : `${replay.views} views`}
+                                    </Typography>
+                                    <Box display="inline-block">
+                                        <DateDisplay date={replay.date} useDateTime={!smallScreen} color={theme.palette.text.secondary} variant="body2" />
+                                    </Box>
+                                </Box>
+                            </Box>
+                            </>}
+                        </Box>
+                    </Box>
+                    );
+                }}
+                </AutoSizer>
+            </Box>
+        </Box>
+    );
+}
+
+export default Replays;

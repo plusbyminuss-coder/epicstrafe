@@ -1,0 +1,178 @@
+import { Box, IconButton, Typography } from "@mui/material";
+import { Game, Style, Time, TimeSortBy, UserInfo, formatCourse, formatPlacement } from "shared";
+import { GridColDef, GridRenderCellParams } from "@mui/x-data-grid";
+import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
+import { brown, grey, yellow } from "@mui/material/colors";
+import TimeDisplay from "../../../displays/TimeDisplay";
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import TimeDateColumn from "../TimeDateColumn";
+import MapLink from "../../../displays/MapLink";
+import UserLink from "../../../displays/UserLink";
+import DateDisplay from "../../../displays/DateDisplay";
+
+
+export function makeMapColumn(showGame: boolean, showStyle: boolean, isCompact?: boolean): GridColDef {
+    return {
+        type: "string",
+        field: "map",
+        headerName: "Map",
+        flex: 330,
+        minWidth: 185,
+        sortable: false,
+        renderCell: (params: GridRenderCellParams<Time, string>) => {
+            const time = params.row;
+            return (
+                <MapLink id={time.mapId} name={time.map} style={time.style} game={time.game} course={time.course} showCourse={isCompact} showGame={showGame} showStyle={showStyle} />
+            );
+        }
+    }
+}
+
+interface UserRowInfo extends UserInfo {
+    game?: Game
+    style?: Style
+}
+export function makeUserColumn<T extends UserRowInfo>(flex: number, noLink?: boolean, game: Game = Game.all, style: Style = Style.all): GridColDef {
+    return {
+        type: "string",
+        field: "username",
+        headerName: "User",
+        flex: flex,
+        minWidth: 180,
+        sortable: false,
+        renderCell: noLink ? undefined : (params: GridRenderCellParams<T, string>) => {
+            const time = params.row;
+            const linkGame = time.game !== undefined ? time.game : game;
+            const linkStyle = time.style !== undefined ? time.style : style;
+            return (
+                <UserLink 
+                    userId={time.userId} 
+                    username={time.username} 
+                    userRoles={time.userRoles} 
+                    userCountry={time.userCountry} 
+                    userThumb={time.userThumb}
+                    game={linkGame} 
+                    strafesStyle={linkStyle} 
+                    fontWeight="bold" 
+                    underline="hover" 
+                />
+            );
+        }
+    }
+}
+
+export function makeDateColumn(): GridColDef {
+    return {
+        type: "string",
+        field: "date",
+        headerName: "Date",
+        flex: 180,
+        minWidth: 125,
+        sortingOrder: ["desc", "asc"],
+        renderCell: (params: GridRenderCellParams<Time, string>) => {
+            return <DateDisplay date={params.row.date} />
+        }
+    }
+}
+
+export function makePlacementColumn(sortable: boolean, isCompact?: boolean): GridColDef {
+    return {
+        type: "number",
+        field: "placement",
+        headerName: isCompact ? "Place" : "Placement",
+        width: sortable ? 115 : (isCompact ? 78 : 100),
+        sortable: sortable,
+        sortingOrder: sortable ? ["asc", "desc"] : [],
+        renderCell: (params: GridRenderCellParams<Time, string>) => {
+            const time = params.row;
+            const placement = time.placement;
+            let iconColor = "";
+            switch (placement) {
+                case 1:
+                    iconColor = yellow[800];
+                    break;
+                case 2:
+                    iconColor = grey[500];
+                    break;
+                case 3:
+                    iconColor = brown[400];
+                    break;
+            }
+            return (
+                <Box display="flex" flexDirection="row" alignItems="center">
+                    <Box flexGrow={1} display="flex" flexDirection="row" alignItems="center" justifyContent="left">
+                    {iconColor ? <EmojiEventsIcon htmlColor={iconColor} sx={{fontSize: "24px", marginLeft: "4px"}} /> : <></>}
+                    </Box>
+                    <Typography variant="inherit" fontFamily="monospace">
+                        {formatPlacement(placement)}
+                    </Typography>
+                </Box>
+            );
+        }
+    }
+}
+
+export function makeTimeColumn(): GridColDef {
+    return {
+        type: "string",
+        field: "time",
+        headerName: "Time",
+        flex: 225,
+        minWidth: 195,
+        sortingOrder: ["asc", "desc"],
+        renderCell: (params: GridRenderCellParams<Time, string>) => {
+            const time = params.row;
+            return <TimeDisplay time={time} />
+        }
+    };
+}
+
+export function makeTimeAndDateColumn(sortBy: TimeSortBy): GridColDef {
+    const isTimeSort = sortBy === TimeSortBy.TimeAsc || sortBy === TimeSortBy.TimeDesc;
+    const isAsc = sortBy === TimeSortBy.TimeAsc || sortBy === TimeSortBy.DateAsc;
+    return {
+        type: "string",
+        field: "time",
+        headerAlign: "center",
+        renderHeader: () => {
+            return (
+                <Box display="flex" flexDirection="row" alignItems="center">
+                    <Box display="flex" flexDirection="column" alignItems="center" ml="5px">
+                        <Typography variant="inherit" fontWeight={500} color={!isTimeSort ? "textSecondary" : undefined}>
+                            Time
+                        </Typography>
+                        <Typography variant="inherit" fontWeight={500} color={isTimeSort ? "textSecondary" : undefined}>
+                            Date
+                        </Typography>
+                    </Box>
+                    <IconButton size="small" sx={{height: 28, width: 28, ml: 0.5}}>
+                        {isAsc ?
+                        <ArrowUpwardIcon fontSize="inherit" />
+                        :
+                        <ArrowDownwardIcon fontSize="inherit" />}
+                    </IconButton>
+                </Box>
+            );
+        },
+        flex: 140,
+        minWidth: 118,
+        sortingOrder: ["asc", "desc"],
+        renderCell: (params: GridRenderCellParams<Time, string>) => {
+            const time = params.row;
+            return <TimeDateColumn time={time} />;
+        }
+    };
+}
+
+export function makeCourseColumn(): GridColDef {
+    return {
+        type: "string",
+        field: "course",
+        headerName: "Course",
+        flex: 60,
+        minWidth: 90,
+        valueFormatter: (val) => formatCourse(val),
+        sortable: false
+    }
+}

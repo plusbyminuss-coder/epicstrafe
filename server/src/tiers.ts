@@ -1,0 +1,225 @@
+import { Game, isEligibleForVoting, Map as StrafesMap, MapTierInfo, ModerationStatus, Style, TierVoteEligibility, StrafesUserRole } from "shared";
+import { getTimes, getUserInfo } from "./strafes_api/api.js";
+import { GlobalsClient } from "./globals.js";
+import { RowDataPacket } from "mysql2";
+import memoize from "memoize";
+import { getAllUsersToStrafesRoles } from "./roles.js";
+
+export const loadTierVotingEligibility = memoize(loadTierVotingEligibilityCore, {cacheKey: JSON.stringify, maxAge: 4 * 60 * 60 * 1000});
+async function loadTierVotingEligibilityCore(userId: number): Promise<TierVoteEligibility> {
+    const userInfoPromise = getUserInfo(userId);
+    const bhopTimesPromise = getTimes(userId, undefined, 1, 1, Game.bhop, Style.all, 0);
+    const surfTimesPromise = getTimes(userId, undefined, 1, 1, Game.surf, Style.all, 0);
+
+    let status = ModerationStatus.Default;
+    let bhopComps = 0;
+    let surfComps = 0;
+
+    const userInfo = await userInfoPromise;
+    if (userInfo) {
+        status = userInfo.state_id;
+    }
+
+    const bhopTimes = await bhopTimesPromise;
+    if (bhopTimes) {
+        bhopComps = bhopTimes.pagination.total_items;
+    }
+
+    const surfTimes = await surfTimesPromise;
+    if (surfTimes) {
+        surfComps = surfTimes.pagination.total_items;
+    }
+
+    return {
+        moderationStatus: status,
+        bhopCompletions: bhopComps,
+        surfCompletions: surfComps
+    };
+}
+
+export async function canUserVoteOnMap(client: GlobalsClient, userId: number, mapId: number): Promise<boolean> {
+    const info = await loadTierVotingEligibilityCore(userId);
+    const map = await client.getMap(mapId);
+    if (!map) {
+        return false;
+    }
+    return isEligibleForVoting(info, map.game);
+}
+
+interface MapTierInfoSQL {
+    id: number
+    map_id: string
+    user_id: string
+    tier: number
+    weight: number
+    updated_at: string
+}
+type MapTierInfoRow = MapTierInfoSQL & RowDataPacket;
+
+export async function getUserTierForMap(client: GlobalsClient, userId: number, mapId: number): Promise<MapTierInfo | undefined> {
+    const query = `SELECT * FROM tier_votes WHERE user_id=? AND map_id=?;`;
+    const values = [userId, mapId];
+
+    const [[row]] = await client.pool.execute<MapTierInfoRow[]>(query, values);
+
+    if (!row) {
+        return undefined;
+    }
+
+    return {
+        userId: userId,
+        mapId: mapId,
+        tier: row.tier,
+        weight: row.weight,
+        updatedAt: new Date(row.updated_at).toISOString()
+    };
+}
+
+async function getVoteWeight(userId: number, map: StrafesMap): Promise<number> {
+    const strafesRoles = await getAllUsersToStrafesRoles();
+    const role = strafesRoles.get(userId);
+    if (role === StrafesUserRole.MapAdmin || role === StrafesUserRole.MapCouncil || role === StrafesUserRole.MapAccess) {
+        return 10;
+    }
+
+    const times = await getTimes(userId, map.id, 20, 1, map.game, Style.all, 0);
+    if (times) {
+        // Not faste or low gravity
+        const allowedStyles = new Set([Style.autohop, Style.scroll, Style.sideways, Style.hsw, Style.wonly, Style.aonly, Style.backwards]);
+        for (const time of times.data) {
+            if (allowedStyles.has(time.style_id)) {
+                return 5; // Extra weight for people who have beaten the map
+            }
+        }
+    }
+    return 1;
+}
+
+export async function setUserTierForMap(client: GlobalsClient, userId: number, map: StrafesMap, tier: number | undefined): Promise<MapTierInfo | undefined> {
+    if (tier === undefined) {
+        const query = `DELETE FROM tier_votes WHERE user_id=? AND map_id=?;`;
+        const values = [userId, map.id];
+        await client.pool.execute(query, values);
+        return undefined;
+    }
+
+    if (!(await canUserVoteOnMap(client, userId, map.id))) {
+        return undefined;
+    }
+
+    const weight = await getVoteWeight(userId, map);
+
+    const query = `INSERT INTO tier_votes (tier, weight, user_id, map_id) VALUES (?, ?, ?, ?) AS new 
+        ON DUPLICATE KEY UPDATE 
+        tier=new.tier,
+        weight=new.weight
+    ;`;
+    await client.pool.execute(query, [tier, weight, userId, map.id]);
+
+    return {
+        userId: userId,
+        mapId: map.id,
+        tier: tier,
+        weight: weight,
+        updatedAt: new Date().toISOString()
+    };
+}
+
+interface CalcTierSQL {
+    map_id: string
+    weighted_tier: string
+}
+type CalcTierRow = CalcTierSQL & RowDataPacket;
+
+export async function calcMapTiers(client: GlobalsClient): Promise<Map<number, number>> {
+    const mapIdToTier = new Map<number, number>();
+
+    // Calculates the weighted average for every map
+    // Ignores outliers (more than 1 standard deviation)
+    const query = `
+        SELECT
+            tier_votes.map_id,
+            SUM(weight * tier) / SUM(weight) AS weighted_tier
+        FROM
+            tier_votes
+        INNER JOIN
+            (
+                SELECT
+                    map_id,
+                    SUM(weight * tier) / SUM(weight) AS avg,
+                    SQRT(
+                        SUM(weight * POWER(tier, 2)) / SUM(weight) - POWER(SUM(weight * tier) / SUM(weight), 2)
+                    ) AS std
+                FROM
+                    tier_votes
+                GROUP BY
+                    map_id
+            ) stats
+        ON
+            tier_votes.map_id = stats.map_id
+        WHERE
+            ABS(tier - stats.avg) <= (1.5 * stats.std)
+        GROUP BY
+            tier_votes.map_id
+    ;`;
+
+    const [rows] = await client.pool.execute<CalcTierRow[]>(query);
+
+    for (const row of rows) {
+        mapIdToTier.set(+row.map_id, Math.round(+row.weighted_tier));
+    }
+
+    return mapIdToTier;
+}
+
+interface VotesSQL {
+    map_id: string
+    tier: number
+    unweighted: string
+    weighted: string
+}
+type VotesRow = VotesSQL & RowDataPacket;
+
+export async function setMapVoteCounts(client: GlobalsClient, maps: StrafesMap[]) {
+    const idToMap = new Map<number, StrafesMap>();
+    for (const map of maps) {
+        idToMap.set(map.id, map);
+    }
+
+    const query = `
+        SELECT
+            map_id,
+            tier,
+            COUNT(*) AS unweighted,
+            SUM(weight) AS weighted
+        FROM
+            tier_votes
+        GROUP BY
+            map_id, tier
+    ;`;
+    const [rows] = await client.pool.execute<VotesRow[]>(query);
+
+    for (const row of rows) {
+        const map = idToMap.get(+row.map_id);
+        if (!map) continue;
+        const tier = row.tier;
+        map.votes.unweighted[tier - 1] = +row.unweighted;
+        map.votes.weighted[tier - 1] = +row.weighted;
+    }
+}
+
+export const getAllMapsWithTiers = memoize(getAllMapsWithTiersCore, { maxAge: 30 * 60 * 1000 });
+async function getAllMapsWithTiersCore(client: GlobalsClient): Promise<StrafesMap[]> {
+    const maps = await client.getAllMaps();
+
+    const voteCountPromise = setMapVoteCounts(client, maps);
+
+    const tiers = await calcMapTiers(client);
+    await voteCountPromise;
+
+    for (const map of maps) {
+        map.tier = tiers.get(map.id);
+    }
+
+    return maps;
+}
