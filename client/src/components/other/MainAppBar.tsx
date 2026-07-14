@@ -110,27 +110,27 @@ function AppLinks(props: IAppMenuProps) {
                 boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.035)"
             }}
         >
-            <Button href={userLink} 
+            <Button href={userLink}
                 color="inherit"
                 sx={linkStyle(navPage === NavigatorPage.Users)}>
                 {NavigatorPage.Users}
             </Button>
-            <Button href="/globals" 
+            <Button href="/globals"
                 color="inherit"
                 sx={linkStyle(navPage === NavigatorPage.Gloabls)}>
                 {NavigatorPage.Gloabls}
             </Button>
-            <Button href="/maps" 
+            <Button href="/maps"
                 color="inherit"
                 sx={linkStyle(navPage === NavigatorPage.Maps)}>
                 {NavigatorPage.Maps}
             </Button>
-            <Button href="/ranks" 
+            <Button href="/ranks"
                 color="inherit"
                 sx={linkStyle(navPage === NavigatorPage.Ranks)}>
                 {NavigatorPage.Ranks}
             </Button>
-            <Button href="/compare" 
+            <Button href="/compare"
                 color="inherit"
                 sx={linkStyle(navPage === NavigatorPage.Compare)}>
                 {NavigatorPage.Compare}
@@ -150,7 +150,7 @@ function AppMenu(props: IAppMenuProps) {
     if (loggedInUser) {
         userLink += `/${loggedInUser.userId}`
     }
-    
+
     const openNavMenu = useCallback((event: React.MouseEvent<HTMLButtonElement>) => {
         setAnchorEl(event.currentTarget);
     }, []);
@@ -210,15 +210,15 @@ function MainAppBar(props: IMainAppBarProps) {
         const configuredAuthOrigin = import.meta.env.VITE_EXTERNAL_AUTH_ORIGIN as string | undefined;
         const isLocalDevelopment = import.meta.env.DEV && ["localhost", "127.0.0.1"].includes(window.location.hostname);
         if (isLocalDevelopment || configuredAuthOrigin) {
-            // OAuth cookies and callbacks are intentionally tied to the production
-            // domain. Continue on the equivalent live page for local previews.
+
+
             const authOrigin = (configuredAuthOrigin ?? "https://strafes.fiveman1.net").replace(/\/$/, "");
             window.location.href = `${authOrigin}${window.location.pathname}${window.location.search}`;
             return;
         }
 
         const url = await login(window.location.pathname.slice(1) + window.location.search);
-        if (url) window.location.href = url; // Force external redirect
+        if (url) window.location.href = url;
     }, []);
 
     const outerWidth = smallScreen ? 52 : 138;
@@ -228,10 +228,10 @@ function MainAppBar(props: IMainAppBarProps) {
             <Toolbar sx={{ justifyContent: "space-between", width: "100%", maxWidth: "1480px", mx: "auto", px: {xs: 1.5, sm: 2.5} }}>
                 <Box minWidth={outerWidth} display="flex">
                     <Link href="/" display="flex" alignItems="center" gap={1.25} color="inherit" underline="none" aria-label="strafes home">
-                        <Box 
-                            component="img" 
-                            src="/android-chrome-192x192.png" 
-                            height="38px" 
+                        <Box
+                            component="img"
+                            src="/android-chrome-192x192.png"
+                            height="38px"
                             width="38px"
                             sx={{
                                 borderRadius: "10px",
@@ -258,26 +258,26 @@ function MainAppBar(props: IMainAppBarProps) {
                 {useAppMenu ? <AppMenu loggedInUser={loggedInUser} /> : <AppLinks loggedInUser={loggedInUser} />}
                 <Box minWidth={outerWidth} display="flex" justifyContent="flex-end">
                     <ButtonGroup>
-                        {loggedInUser ? 
-                        <AccountMenu user={loggedInUser} disableSettings={disableSettings} /> 
-                        : 
-                        (isUserLoading ? 
+                        {loggedInUser ?
+                        <AccountMenu user={loggedInUser} disableSettings={disableSettings} />
+                        :
+                        (isUserLoading ?
                         <Box width="50px" height="50px" padding="5px" display="flex" justifyContent="center" alignItems="center">
                             <CircularProgress size={32} />
                         </Box>
-                        : 
-                        <Button 
-                            variant="outlined" 
-                            size={smallScreen ? "small" : "medium"} 
-                            startIcon={<LoginIcon />} 
+                        :
+                        <Button
+                            variant="outlined"
+                            size={smallScreen ? "small" : "medium"}
+                            startIcon={<LoginIcon />}
                             onClick={onLogin}
-                            sx={{ 
-                                width: outerWidth, 
-                                whiteSpace: "nowrap", 
+                            sx={{
+                                width: outerWidth,
+                                whiteSpace: "nowrap",
                                 color: "text.primary",
                                 borderColor: "divider",
                                 bgcolor: "action.hover"
-                            }} 
+                            }}
                         >
                             Login
                         </Button>)}

@@ -28,7 +28,7 @@ function makeColumns(placementWidth: number) {
         sortable: false,
         valueFormatter: (value) => value
     });
-    
+
     cols.push(makeUserColumn<Rank>(270));
 
     cols.push({
@@ -58,7 +58,7 @@ function makeColumns(placementWidth: number) {
             </Tooltip>
         ),
         flex: 240,
-        minWidth: 128, // min width to not cutoff Getting There (7)
+        minWidth: 128,
         sortingOrder: ["asc"],
         valueFormatter: formatRank
     });
@@ -75,11 +75,11 @@ function makeColumns(placementWidth: number) {
             </Tooltip>
         ),
         flex: 160,
-        minWidth: 101, // min width to not cutoff column header when sorted
+        minWidth: 101,
         sortingOrder: ["asc"],
         valueFormatter: formatSkill
     });
-    
+
     return cols;
 }
 
@@ -96,7 +96,7 @@ function RanksCard(props: IRanksCardProps) {
     const apiRef = useGridApiRef();
     const queryClient = useQueryClient();
 
-    const [currentSortBy, setCurrentSortBy] = useQueryState("sort", 
+    const [currentSortBy, setCurrentSortBy] = useQueryState("sort",
         parseAsNumberLiteral([RankSortBy.RankAsc, RankSortBy.SkillAsc])
         .withDefault(RankSortBy.RankAsc)
         .withOptions({ history: "replace" })
@@ -166,7 +166,7 @@ function RanksCard(props: IRanksCardProps) {
             dataSource={dataSource}
             pageSizeOptions={[20]}
             initialState={{
-                pagination: { 
+                pagination: {
                     paginationModel: { pageSize: 20 },
                     rowCount: -1
                 },
@@ -180,7 +180,7 @@ function RanksCard(props: IRanksCardProps) {
             onPaginationModelChange={onPageChange}
             onSortModelChange={onSortChanged}
             sx={{
-                "--DataGrid-overlayHeight": `${36 * 20}px` // Height of grid while loading for first time: row height * row count
+                "--DataGrid-overlayHeight": `${36 * 20}px`
             }}
         />
     </Paper>
@@ -189,11 +189,11 @@ function RanksCard(props: IRanksCardProps) {
 
 function Ranks() {
     const {game, setGame, style, setStyle} = useGameStyle();
-    
+
     useEffect(() => {
         document.title = "ranks - strafes"
     }, []);
-    
+
     return (
     <Box display="flex" flexDirection="column" flexGrow={1}>
         <Breadcrumbs separator={<NavigateNextIcon />} sx={{p: 1}}>

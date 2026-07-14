@@ -34,7 +34,7 @@ function UserCardAvatar(props: IUserDisplayProps) {
             <UserAvatar sx={{height: 100, width: 100}} username={user.username} userThumb={user.userThumb} />
             {isCurrentUser ?
             <Box
-                title="You" 
+                title="You"
                 sx={{
                     position: "absolute",
                     bottom: 5,
@@ -62,7 +62,7 @@ function UserDisplay(props: IUserDisplayProps) {
     const dateValue = new Date(user.joinedOn);
     const tooltipText = dateTimeFormat.format(dateValue);
 
-    const country = (loginUser && user.userId === loginUser.userId) ? settings.country : user.userCountry; // To get around caching
+    const country = (loginUser && user.userId === loginUser.userId) ? settings.country : user.userCountry;
 
     return (
         <Box display="flex" flexDirection="row">
@@ -77,7 +77,7 @@ function UserDisplay(props: IUserDisplayProps) {
                                 {user.displayName}
                                 {country ? <ReactCountryFlag style={{verticalAlign: "text-top", marginLeft: 8}} title={formatCountryCode(country)} countryCode={country} svg /> : undefined}
                             </Typography>
-                            
+
                         </Box>
                     </Box>
                     <Box display="inline-flex">
@@ -121,18 +121,18 @@ function UserDisplay(props: IUserDisplayProps) {
 
 function UserCard(props: IUserCardProps) {
     const { minHeight, loading, user, center } = props;
-    
+
     return (
     <Paper elevation={2} sx={{padding: 2, display: "flex", flexDirection: "row", minHeight: minHeight}}>
         <Box display="flex" width="100%" flexDirection="row" alignItems="center" justifyContent={center ? "center" : undefined}>
-        {user && !loading ? 
-            <UserDisplay user={user} /> 
-        : 
-        loading ? 
+        {user && !loading ?
+            <UserDisplay user={user} />
+        :
+        loading ?
             <Box flexGrow={1} display="flex" justifyContent="center">
                 <CircularProgress size="72px" />
             </Box>
-        : 
+        :
             <PermIdentityIcon sx={{ fontSize: 72, flexGrow: 1 }} />}
         </Box>
     </Paper>);

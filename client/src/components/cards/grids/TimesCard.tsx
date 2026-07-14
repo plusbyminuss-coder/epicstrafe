@@ -128,7 +128,7 @@ function TimesGrid(props: ITimesCardProps) {
 
     const [rowCount, setRowCount] = useState(0);
 
-    const [currentSortBy, setCurrentSortBy] = useQueryState("sort", 
+    const [currentSortBy, setCurrentSortBy] = useQueryState("sort",
         parseAsNumberLiteral([TimeSortBy.DateAsc, TimeSortBy.DateDesc, TimeSortBy.TimeAsc, TimeSortBy.TimeDesc])
         .withDefault(defaultSort)
         .withOptions({ history: "replace" })
@@ -151,7 +151,7 @@ function TimesGrid(props: ITimesCardProps) {
         apiRef.current?.setPageSize(pageSize);
     }, [apiRef, pageSize]);
 
-    // Reset page to 0 when changing something that would load new data
+
     useEffect(() => {
         const newKey = getGridKey(userId, mapId, game, style, course, onlyWRs, currentSortBy);
         if (newKey !== gridKey) {
@@ -230,7 +230,7 @@ function TimesGrid(props: ITimesCardProps) {
         if (!allowOnlyWRs && !userId && !mapId) {
             return { rows: [], rowCount: 0 }
         }
-        
+
         const timeData = await queryClient.fetchQuery(queries.times.times(start, end, sortBy, course, game, style, userId, mapId, onlyWRs));
 
         if (onLoadTimes && timeData?.times) {
@@ -240,7 +240,7 @@ function TimesGrid(props: ITimesCardProps) {
         if (!timeData) {
             return { rows: [], rowCount: 0 }
         }
-        
+
         return {
             rows: timeData.times,
             rowCount: timeData.pagination.totalItems
@@ -284,8 +284,8 @@ function TimesGrid(props: ITimesCardProps) {
             columnHeaderHeight={isCompact ? 76 : 56}
             initialState={{
                 pagination: {
-                    paginationModel: { 
-                        pageSize: pageSize, 
+                    paginationModel: {
+                        pageSize: pageSize,
                         page: initPage
                     },
                     rowCount: 0
@@ -316,10 +316,10 @@ function TimesGrid(props: ITimesCardProps) {
                     display: isCompact ? "none !important" : undefined
                 },
                 [`& .${tablePaginationClasses.selectLabel}`]: {
-                    display: "none", // Hide select rows per page
+                    display: "none",
                 },
                 [`& .${tablePaginationClasses.input}`]: {
-                    display: "none", // Hide select rows per page
+                    display: "none",
                 },
             }}
         />

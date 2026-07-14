@@ -22,20 +22,20 @@ const LinkBehavior = React.forwardRef<
     Omit<RouterLinkProps, 'to'> & { href: RouterLinkProps['to'] }
 >((props, ref) => {
     const { href, ...other } = props;
-    // Map href (Material UI) -> to (react-router)
+
     return <RouterLink ref={ref} to={href} {...other} />;
 });
 
 function App() {
     const { data: maps } = useMaps();
-    
+
     const loginUserQuery = useLoginUser();
     const loggedInUser = loginUserQuery.data ?? undefined;
     const loggedInUserLoading = loginUserQuery.isLoading;
 
     const [ settings, setSettingsState ] = useSettings();
     const [ mode, setMode ] = useState<PaletteMode>(localStorage.getItem("theme") as PaletteMode || "dark");
-    
+
     const smallScreen = useMediaQuery("@media screen and (max-width: 480px)");
     const location = useLocation();
 
@@ -59,7 +59,7 @@ function App() {
             if (date > now) {
                 continue;
             }
-            
+
             ++counts.flyTrials;
             if (map.game === Game.bhop) {
                 ++counts.bhop;
@@ -104,7 +104,7 @@ function App() {
 
     const settingsOpen = location.pathname.startsWith("/settings");
     useEffect(() => {
-        // Potentially reset theme when navigating to/from settings
+
         setMode(settings.theme);
     }, [settings.theme, settingsOpen]);
 

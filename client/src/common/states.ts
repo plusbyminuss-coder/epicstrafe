@@ -171,7 +171,7 @@ export function useUserSearch(): UserSearchInfo {
     };
 }
 
-// https://github.com/mui/material-ui/issues/10739#issuecomment-1484828925
+
 export function useAppBarHeight(): number {
     const {
         mixins: { toolbar },

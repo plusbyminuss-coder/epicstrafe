@@ -3,11 +3,11 @@ import react from "@vitejs/plugin-react";
 import tsconfigPaths from "vite-tsconfig-paths";
 import eslintPlugin from "@nabla/vite-plugin-eslint";
 
-// https://vitejs.dev/config/
+
 export default defineConfig(({ mode }) => {
 	const env = loadEnv(mode, process.cwd(), "");
-	// Use the public StrafesNET API automatically. This can still be overridden
-	// when developing against another compatible API.
+
+
 	const apiTarget = env.VITE_API_PROXY_TARGET || "https://strafes.fiveman1.net";
 
 	return {

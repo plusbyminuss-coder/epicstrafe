@@ -29,13 +29,13 @@ function NumberGridPagination(props: NumberGridPaginationProps) {
     else if (rowDigits > 4) showPageInput = !screen410px;
 
     const renderItem = useCallback((item: PaginationRenderItemParams): JSX.Element | null => {
-        // There is always exactly 0 or 1 selected page, use that to render our page selector
+
         if (item.selected && showPageInput) {
-            // Padding on left/right is 14px * 2 = 28. Add 8 per digit that can be shown
+
             const width = numDigits(rowCount) * 8 + 28;
             return (
-                <SimpleNumberField 
-                    size="small" 
+                <SimpleNumberField
+                    size="small"
                     disabled={rowCount <= rowsPerPage}
                     sx={{
                         width: `${width}px`,
@@ -50,18 +50,18 @@ function NumberGridPagination(props: NumberGridPaginationProps) {
                         const newPage = Math.floor((value - 1) / rowsPerPage);
                         onPageChange(null, newPage);
                         return calcRowNum(newPage, rowsPerPage, rowCount);
-                    }} 
+                    }}
                     max={rowCount}
                 />
             );
         }
-        
-        // Hide the page buttons and ellipses
+
+
         if (item.type === "page" || item.type === "start-ellipsis" || item.type === "end-ellipsis") {
             return null;
         }
-        
-        // Show arrows
+
+
         return <PaginationItem {...item} />;
     }, [onPageChange, page, rowCount, rowsPerPage, showPageInput]);
 
