@@ -35,26 +35,6 @@ npm run dev:frontend
 
 Open [http://localhost:3000](http://localhost:3000).
 
-To use a different public API backend, copy [`client/.env.example`](client/.env.example) to `client/.env.local` and update `VITE_API_PROXY_TARGET`.
-
-## Deploy a frontend preview to Vercel
-
-Import the GitHub repository into [Vercel](https://vercel.com/new), keep the repository root as the project root, and configure:
-
-- Build command: `npm run build:frontend`
-- Output directory: `client/build`
-- Install command: `npm install`
-
-Add this public build variable in the Vercel project settings:
-
-   ```env
-   VITE_EXTERNAL_AUTH_ORIGIN=https://strafes.fiveman1.net
-   ```
-
-The deployment also needs `/api/*` requests proxied to the original Strafes API and all other routes rewritten to `/index.html`. Login hands off to the original site because OAuth sessions cannot be shared across domains.
-
-See Vercel's documentation for [monorepos](https://vercel.com/docs/monorepos), [build configuration](https://vercel.com/docs/deployments/configure-a-build), and [environment variables](https://vercel.com/docs/environment-variables).
-
 ## Commands
 
 ```bash
