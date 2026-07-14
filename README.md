@@ -19,7 +19,7 @@ This repository is based on the original MIT-licensed [`fiveman1/strafes-site`](
 - npm 10 or newer
 - A browser with WebGPU support for replay playback
 
-No database or Roblox OAuth setup is required. Local development uses the original public Strafes API.
+No database or Roblox OAuth setup is required. Local development and Vercel deployments use the existing public StrafesNET API automatically.
 
 ## Run the public frontend locally
 
@@ -35,7 +35,7 @@ npm run dev:frontend
 
 Open [http://localhost:3000](http://localhost:3000).
 
-To use a different public API backend, copy [`client/.env.example`](client/.env.example) to `client/.env.local` and update `VITE_API_PROXY_TARGET`.
+No environment file is needed. To use a different compatible API while developing, copy [`client/.env.example`](client/.env.example) to `client/.env.local` and update `VITE_API_PROXY_TARGET`.
 
 ## Deploy a frontend preview to Vercel
 
@@ -45,13 +45,7 @@ Import the GitHub repository into [Vercel](https://vercel.com/new), keep the rep
 - Output directory: `client/build`
 - Install command: `npm install`
 
-Add this public build variable in the Vercel project settings:
-
-   ```env
-   VITE_EXTERNAL_AUTH_ORIGIN=https://strafes.fiveman1.net
-   ```
-
-The deployment also needs `/api/*` requests proxied to the original Strafes API and all other routes rewritten to `/index.html`. Login hands off to the original site because OAuth sessions cannot be shared across domains.
+The included [`vercel.json`](vercel.json) proxies `/api/*` to the public StrafesNET API and handles client-side routes. No Vercel environment variables are required. Login hands off to the original site because OAuth sessions cannot be shared across domains.
 
 See Vercel's documentation for [monorepos](https://vercel.com/docs/monorepos), [build configuration](https://vercel.com/docs/deployments/configure-a-build), and [environment variables](https://vercel.com/docs/environment-variables).
 

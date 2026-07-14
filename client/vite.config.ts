@@ -6,8 +6,8 @@ import eslintPlugin from "@nabla/vite-plugin-eslint";
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => {
 	const env = loadEnv(mode, process.cwd(), "");
-	// The local backend requires private database and OAuth credentials. Use the
-	// public production API for development unless a local target is provided.
+	// Use the public StrafesNET API automatically. This can still be overridden
+	// when developing against another compatible API.
 	const apiTarget = env.VITE_API_PROXY_TARGET || "https://strafes.fiveman1.net";
 
 	return {
