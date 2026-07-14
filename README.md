@@ -9,15 +9,11 @@ This repository is based on the original MIT-licensed [`fiveman1/strafes-site`](
 - User search, profiles, times, and statistics
 - Global records and ranked leaderboards
 - Map browser with filtering, sorting, and CSV export
-- Head-to-head user comparisons
-- WebGPU replay player with download timeouts and non-blocking comparison data
-- Responsive light and dark themes
 
 ## Requirements
 
 - [Node.js](https://nodejs.org/) 22 or newer
 - npm 10 or newer
-- A browser with WebGPU support for replay playback
 
 ## Run the public frontend locally
 
