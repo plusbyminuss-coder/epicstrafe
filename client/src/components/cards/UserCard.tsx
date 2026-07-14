@@ -1,15 +1,15 @@
 import { Box, Link, Paper, Tooltip, Typography, useTheme } from "@mui/material";
-import { User, formatCountryCode, formatUserRole } from "shared";
+import { User, formatUserRole } from "shared";
 import PermIdentityIcon from '@mui/icons-material/PermIdentity';
 import CircularProgress from '@mui/material/CircularProgress';
 import { ContextParams, getUserRoleColor } from "../../common/common";
 import { useOutletContext } from "react-router";
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import TimeAgo from "react-timeago";
-import ReactCountryFlag from "react-country-flag";
 import { dateTimeFormat, relativeTimeFormatter } from "../../common/datetime";
 import UserAvatar from "../displays/UserAvatar";
 import ColorChip from "../displays/ColorChip";
+import CountryFlag from "../displays/CountryFlag";
 
 interface IUserDisplayProps {
     user: User
@@ -75,7 +75,7 @@ function UserDisplay(props: IUserDisplayProps) {
                         <Box lineHeight={1} sx={{wordBreak: "break-word", }} display="flex" alignItems="center">
                             <Typography variant="h5" >
                                 {user.displayName}
-                                {country ? <ReactCountryFlag style={{verticalAlign: "text-top", marginLeft: 8}} title={formatCountryCode(country)} countryCode={country} svg /> : undefined}
+                                {country ? <CountryFlag countryCode={country} marginLeft={8} /> : undefined}
                             </Typography>
 
                         </Box>

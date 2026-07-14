@@ -3,7 +3,7 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react
 import init, { Bvh, CompleteBot, CompleteMap, Graphics, PlaybackHead, setup_graphics } from "../bot_player/strafesnet_roblox_bot_player_wasm_module";
 import AutoSizer from "react-virtualized-auto-sizer";
 import PlaybackOverlay from "./playback/PlaybackOverlay";
-import { formatCountryCode, formatCourse, formatDiff, formatGame, formatPlacement, formatStyle, formatTier, formatTime, GameControls, MAIN_COURSE, Replay } from "shared";
+import { formatCourse, formatDiff, formatGame, formatPlacement, formatStyle, formatTier, formatTime, GameControls, MAIN_COURSE, Replay } from "shared";
 import { Link as RouterLink, useOutletContext, useParams } from "react-router";
 import { getBotFileResponse, getMapFileResponse } from "../api/api";
 import Typography from "@mui/material/Typography";
@@ -18,11 +18,11 @@ import Link from "@mui/material/Link";
 import Alert from "@mui/material/Alert";
 import DateDisplay from "./displays/DateDisplay";
 import { getMapTierColor } from "../common/colors";
-import ReactCountryFlag from "react-country-flag";
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import { clamp } from "../common/utils";
 import { useQuery } from "@tanstack/react-query";
 import { queries } from "../api/queries";
+import CountryFlag from "./displays/CountryFlag";
 
 const ASPECT_RATIO = 16 / 9;
 const REPLAY_READ_TIMEOUT = 20000;
@@ -1040,7 +1040,7 @@ function Replays() {
 
                                     </Link>
                                     {replay.userCountry &&
-                                    <ReactCountryFlag style={{marginLeft: 6}} title={formatCountryCode(replay.userCountry)} countryCode={replay.userCountry} svg />}
+                                    <CountryFlag countryCode={replay.userCountry} marginLeft={6} />}
                                     {isCurrentUser &&
                                     <Box display="flex" title="You">
                                         <AccountBoxIcon sx={{marginLeft: 0.75, fontSize: 20}} htmlColor={theme.palette.secondary.main} />

@@ -16,27 +16,36 @@ function HomeCard(props: IHomeCardProps) {
         elevation={0}
         sx={{
             width: "100%",
-            height: {xs: "142px", sm: "168px"},
+            height: {xs: "146px", sm: "174px"},
             position: "relative",
             overflow: "hidden",
             animation: "cardEnter 520ms cubic-bezier(0.22, 1, 0.36, 1) both",
-            transition: "transform 260ms cubic-bezier(0.22, 1, 0.36, 1), border-color 260ms ease, box-shadow 260ms ease",
+            transition: "transform 300ms cubic-bezier(0.22, 1, 0.36, 1), border-color 300ms ease, box-shadow 300ms ease, background-color 300ms ease",
             "&::before": {
                 content: '\"\"',
                 position: "absolute",
-                width: "120px",
-                height: "120px",
-                top: "-72px",
-                right: "-54px",
+                width: "150px",
+                height: "150px",
+                top: "-92px",
+                right: "-62px",
                 borderRadius: "50%",
                 background: (theme) => alpha(theme.palette.primary.main, theme.palette.mode === "light" ? 0.13 : 0.18),
-                filter: "blur(20px)",
+                filter: "blur(24px)",
                 transition: "transform 320ms ease, opacity 320ms ease",
                 opacity: 0.72,
                 pointerEvents: "none"
             },
+            "&::after": {
+                content: '\"\"',
+                position: "absolute",
+                inset: 0,
+                background: "linear-gradient(112deg, transparent 18%, rgba(255, 255, 255, 0.075) 46%, transparent 64%)",
+                transform: "translateX(-120%)",
+                transition: "transform 700ms cubic-bezier(0.22, 1, 0.36, 1)",
+                pointerEvents: "none"
+            },
             ":hover": {
-                transform: "translateY(-5px) scale(1.008)",
+                transform: "translateY(-7px) scale(1.012)",
                 borderColor: "primary.main",
                 boxShadow: (theme) => theme.palette.mode === "light"
                     ? `0 18px 44px ${alpha(theme.palette.primary.main, 0.12)}`
@@ -44,6 +53,9 @@ function HomeCard(props: IHomeCardProps) {
                 "&::before": {
                     transform: "translate3d(-12px, 12px, 0) scale(1.25)",
                     opacity: 1
+                },
+                "&::after": {
+                    transform: "translateX(120%)"
                 }
             }
         }}
@@ -52,20 +64,22 @@ function HomeCard(props: IHomeCardProps) {
             <CardContent sx={{height: "100%", p: {xs: 2.25, sm: 2.75}, "&:last-child": {pb: {xs: 2.25, sm: 2.75}}}}>
                 <Box display="flex" alignItems="center" mb={1.5}>
                     <Box
-                        width="42px"
-                        height="42px"
+                        width="44px"
+                        height="44px"
                         display="flex"
                         alignItems="center"
                         justifyContent="center"
-                        borderRadius="11px"
+                        borderRadius="13px"
                         color="primary.main"
                         bgcolor="action.hover"
                         sx={{
-                            boxShadow: (theme) => `inset 0 0 0 1px ${alpha(theme.palette.primary.main, 0.12)}, 0 8px 22px ${alpha(theme.palette.primary.main, 0.10)}`,
+                            background: (theme) => `linear-gradient(145deg, ${alpha(theme.palette.primary.main, 0.16)}, ${alpha(theme.palette.secondary.main, 0.06)})`,
+                            boxShadow: (theme) => `inset 0 0 0 1px ${alpha(theme.palette.primary.main, 0.18)}, 0 10px 28px ${alpha(theme.palette.primary.main, 0.13)}`,
                             transition: "transform 260ms cubic-bezier(0.22, 1, 0.36, 1), background-color 260ms ease",
                             ".MuiCard-root:hover &": {
-                                transform: "rotate(-4deg) scale(1.08)",
-                                bgcolor: (theme) => alpha(theme.palette.primary.main, 0.14)
+                                transform: "translateY(-2px) rotate(-5deg) scale(1.10)",
+                                bgcolor: (theme) => alpha(theme.palette.primary.main, 0.16),
+                                boxShadow: (theme) => `inset 0 0 0 1px ${alpha(theme.palette.primary.main, 0.28)}, 0 12px 30px ${alpha(theme.palette.primary.main, 0.22)}`
                             },
                             "& svg": {fontSize: 24}
                         }}

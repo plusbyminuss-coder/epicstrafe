@@ -1,7 +1,7 @@
 import React, { lazy, Suspense } from 'react';
 import ReactDOM from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from "react-router";
-import LinearProgress from '@mui/material/LinearProgress';
+import Box from '@mui/material/Box';
 import App from './App';
 import Home from './components/Home';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
@@ -20,7 +20,18 @@ const Replays = lazy(() => import('./components/Replays'));
 function withSuspense(Component: React.LazyExoticComponent<React.ComponentType>) {
     return function SuspendedRoute() {
         return (
-            <Suspense fallback={<LinearProgress sx={{ position: "fixed", inset: "68px 0 auto", zIndex: 1200, height: 2 }} />}>
+            <Suspense fallback={
+                <Box
+                    sx={{
+                        position: "fixed",
+                        inset: 0,
+                        zIndex: 1300,
+                        pointerEvents: "none",
+                        backgroundColor: "rgba(8, 9, 17, 0.01)",
+                        animation: "routeLoadingBlur 620ms ease-in-out infinite alternate"
+                    }}
+                />
+            }>
                 <Component />
             </Suspense>
         );

@@ -65,30 +65,32 @@ function AppLinks(props: IAppMenuProps) {
 
     const linkStyle = (selected: boolean) => ({
         position: "relative",
-        minWidth: 92,
-        height: Math.min(appBarHeight - 12, 44),
-        px: 2,
+        minWidth: 86,
+        height: Math.min(appBarHeight - 14, 42),
+        px: 1.75,
         color: selected ? "text.primary" : "text.secondary",
-        backgroundColor: selected ? "action.selected" : "transparent",
+        background: selected ? "linear-gradient(135deg, rgba(255, 79, 154, 0.18), rgba(93, 217, 255, 0.08))" : "transparent",
         fontWeight: selected ? 700 : 500,
-        boxShadow: selected ? "0 8px 24px rgba(236, 59, 131, 0.10), inset 0 0 0 1px rgba(236, 59, 131, 0.10)" : "none",
+        textShadow: selected ? "0 0 18px rgba(255, 255, 255, 0.22)" : "none",
+        boxShadow: selected ? "0 8px 26px rgba(255, 79, 154, 0.12), inset 0 0 0 1px rgba(255, 79, 154, 0.17), inset 0 1px 0 rgba(255, 255, 255, 0.08)" : "none",
         transition: "color 200ms ease, background-color 200ms ease, box-shadow 200ms ease, transform 200ms ease",
         "&::after": {
             content: '\"\"',
             position: "absolute",
             left: "50%",
-            bottom: 4,
-            width: selected ? 18 : 0,
+            bottom: 3,
+            width: selected ? 20 : 0,
             height: 2,
             borderRadius: 2,
-            bgcolor: "primary.main",
-            boxShadow: selected ? "0 0 12px rgba(236, 59, 131, 0.75)" : "none",
+            background: "linear-gradient(90deg, #ff4f9a, #ff86ba)",
+            boxShadow: selected ? "0 0 14px rgba(255, 79, 154, 0.85)" : "none",
             transform: "translateX(-50%)",
             transition: "width 220ms cubic-bezier(0.22, 1, 0.36, 1)"
         },
         "&:hover": {
             color: "text.primary",
-            backgroundColor: "action.hover",
+            backgroundColor: selected ? undefined : "action.hover",
+            boxShadow: selected ? "0 8px 26px rgba(255, 79, 154, 0.14), inset 0 0 0 1px rgba(255, 79, 154, 0.2)" : "none",
             transform: "translateY(-1px)"
         }
     });
@@ -99,15 +101,15 @@ function AppLinks(props: IAppMenuProps) {
             flexDirection="row"
             justifyContent="center"
             alignItems="center"
-            gap={0.25}
+            gap={0.375}
             p={0.5}
             border={1}
             borderColor="divider"
-            borderRadius="13px"
-            bgcolor="action.hover"
+            borderRadius="14px"
             sx={{
+                background: "linear-gradient(135deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015))",
                 backdropFilter: "blur(18px) saturate(150%)",
-                boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.035)"
+                boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 8px 28px rgba(0, 0, 0, 0.08)"
             }}
         >
             <Button href={userLink}
@@ -163,7 +165,7 @@ function AppMenu(props: IAppMenuProps) {
 
     return (
         <Box>
-            <Button sx={{width: navMenuWidth, height: 42, bgcolor: "action.hover", borderColor: "divider"}} variant="outlined" color="inherit" endIcon={open ? <ArrowDropUpIcon /> : <ArrowDropDownIcon />} onClick={openNavMenu} >
+            <Button sx={{width: navMenuWidth, height: 42, bgcolor: "action.hover", borderColor: "divider", boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.05)"}} variant="outlined" color="inherit" endIcon={open ? <ArrowDropUpIcon /> : <ArrowDropDownIcon />} onClick={openNavMenu} >
                 {navPage ?? NavigatorPage.Home}
             </Button>
             <Menu anchorEl={anchorEl} open={open} onClose={closeNavMenu} slotProps={{list: {sx: {width: navMenuWidth}}}} >
@@ -221,25 +223,26 @@ function MainAppBar(props: IMainAppBarProps) {
         if (url) window.location.href = url;
     }, []);
 
-    const outerWidth = smallScreen ? 52 : 138;
+    const outerWidth = smallScreen ? 46 : 132;
 
     return (
         <AppBar position="sticky">
-            <Toolbar sx={{ justifyContent: "space-between", width: "100%", maxWidth: "1480px", mx: "auto", px: {xs: 1.5, sm: 2.5} }}>
+            <Toolbar sx={{ justifyContent: "space-between", width: "100%", maxWidth: "1450px", mx: "auto", px: {xs: 1.25, sm: 2} }}>
                 <Box minWidth={outerWidth} display="flex">
                     <Link href="/" display="flex" alignItems="center" gap={1.25} color="inherit" underline="none" aria-label="strafes home">
                         <Box
                             component="img"
                             src="/android-chrome-192x192.png"
-                            height="38px"
-                            width="38px"
+                            height="36px"
+                            width="36px"
                             sx={{
-                                borderRadius: "10px",
-                                filter: "drop-shadow(0 6px 12px rgba(236, 59, 131, 0.22))",
+                                borderRadius: "11px",
+                                filter: "drop-shadow(0 6px 14px rgba(255, 79, 154, 0.30))",
+                                boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.2)",
                                 transition: "transform 260ms cubic-bezier(0.22, 1, 0.36, 1), filter 260ms ease",
                                 "&:hover": {
                                     transform: "translateY(-2px) rotate(-3deg) scale(1.04)",
-                                    filter: "drop-shadow(0 8px 16px rgba(236, 59, 131, 0.38))"
+                                    filter: "drop-shadow(0 9px 18px rgba(255, 79, 154, 0.48))"
                                 }
                             }}
                         />
@@ -248,7 +251,8 @@ function MainAppBar(props: IMainAppBarProps) {
                                 display: {xs: "none", lg: "block"},
                                 fontFamily: '"Goldman", sans-serif',
                                 fontWeight: 700,
-                                letterSpacing: "-0.03em"
+                                letterSpacing: "-0.035em",
+                                textShadow: "0 0 22px rgba(255, 79, 154, 0.22)"
                             }}
                         >
                             strafes
@@ -276,7 +280,13 @@ function MainAppBar(props: IMainAppBarProps) {
                                 whiteSpace: "nowrap",
                                 color: "text.primary",
                                 borderColor: "divider",
-                                bgcolor: "action.hover"
+                                bgcolor: "action.hover",
+                                boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.05)",
+                                "&:hover": {
+                                    borderColor: "primary.main",
+                                    bgcolor: "rgba(255, 79, 154, 0.10)",
+                                    boxShadow: "0 8px 24px rgba(255, 79, 154, 0.12)"
+                                }
                             }}
                         >
                             Login
