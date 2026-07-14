@@ -22,13 +22,15 @@ import { readFile } from "fs/promises";
 
 const STRAFES_DB_USER = process.env.STRAFES_DB_USER;
 const STRAFES_DB_PASSWORD = process.env.STRAFES_DB_PASSWORD;
+const DB_HOST = process.env.DB_HOST ?? "localhost";
+const DB_PORT = +(process.env.DB_PORT ?? "3306");
 
 if (!STRAFES_DB_USER || !STRAFES_DB_PASSWORD) {
     console.error("Missing strafes global database user/password");
     exit(1);
 }
 
-const globalsClient = new GlobalsClient(STRAFES_DB_USER, STRAFES_DB_PASSWORD);
+const globalsClient = new GlobalsClient(STRAFES_DB_USER, STRAFES_DB_PASSWORD, DB_HOST, DB_PORT);
 
 const CLIENT_ID = process.env.ROBLOX_CLIENT_ID;
 const CLIENT_SECRET = process.env.ROBLOX_CLIENT_SECRET;
@@ -41,7 +43,7 @@ if (!CLIENT_ID || !CLIENT_SECRET || !AUTH_DB_USER || !AUTH_DB_PASSWORD) {
     exit(1);
 }
 
-const authClient = await AuthClient.Create(CLIENT_ID, CLIENT_SECRET, AUTH_DB_USER, AUTH_DB_PASSWORD, BASE_URL);
+const authClient = await AuthClient.Create(CLIENT_ID, CLIENT_SECRET, AUTH_DB_USER, AUTH_DB_PASSWORD, BASE_URL, DB_HOST, DB_PORT);
 
 const app = express();
 

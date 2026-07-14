@@ -8,6 +8,7 @@
 - Added restrained translucent surfaces for supported browsers.
 - Added a public development API proxy for frontend-only contributors.
 - Standardized the repository's root commands on npm workspaces.
+- Added Docker Compose provisioning for both MySQL databases and all required tables.
 
 ### Fixed
 

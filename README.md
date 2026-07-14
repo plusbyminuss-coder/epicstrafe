@@ -18,6 +18,7 @@ This project is based on the original MIT-licensed [`fiveman1/strafes-site`](htt
 
 - [Node.js](https://nodejs.org/) 22 or newer
 - npm 10 or newer
+- [Docker Desktop](https://www.docker.com/products/docker-desktop/) for the automatic local MySQL setup
 - A browser with WebGPU support for replay playback
 
 The public frontend can run without database credentials. Running the complete backend requires MySQL, Strafes API access, and Roblox OAuth credentials.
@@ -42,24 +43,38 @@ To use a different API backend, copy [`client/.env.example`](client/.env.example
 
 The complete backend provides same-origin Roblox OAuth, account settings, tier voting, replay view tracking, and the private database-backed API.
 
-1. Copy `.env.example` to `.env`.
-2. Create a MySQL database named `strafes_auth_users`.
-3. Apply [`server/sql/auth.sql`](server/sql/auth.sql), [`server/sql/tiers.sql`](server/sql/tiers.sql), and [`server/sql/replays.sql`](server/sql/replays.sql) to the appropriate databases.
-4. Set up [`fiveman1/strafes-globals-db`](https://github.com/fiveman1/strafes-globals-db).
-5. Add the required API, database, OAuth, and cookie secrets to `.env`.
-6. Point `client/.env.local` at the local backend:
+1. Start the included MySQL 8.4 container. It automatically creates `strafes_auth_users`, `strafes_globals`, the `epicstrafe` development user, and every required table:
+
+   ```bash
+   npm run db:up
+   ```
+
+2. Copy `.env.example` to `.env`. The template already contains the matching safe local database credentials.
+3. Add your Strafes API key, Roblox OAuth client ID/secret, and a new cookie secret to `.env`.
+4. Seed `strafes_globals` with [`fiveman1/strafes-globals-db`](https://github.com/fiveman1/strafes-globals-db) using the same database credentials. Run its `npm run dev-seed` command once, then schedule its normal refresh command hourly if you operate an independent backend.
+5. Point `client/.env.local` at the local backend:
 
    ```env
    VITE_API_PROXY_TARGET=http://localhost:8080
    ```
 
-7. Start all workspaces:
+6. Start all workspaces:
 
    ```bash
    npm run dev
    ```
 
 Never commit `.env` or real credentials.
+
+### Local database commands
+
+```bash
+npm run db:up     # Start MySQL and initialize missing schemas
+npm run db:logs   # Follow MySQL logs
+npm run db:down   # Stop MySQL while preserving its data volume
+```
+
+To completely reset local database data, run `docker compose down -v` and then `npm run db:up`. This permanently removes the local Docker volume.
 
 ## Roblox OAuth setup
 
@@ -98,6 +113,8 @@ This frontend-only deployment supports public data and replays. Its Login button
 
 For independent OAuth and account features, deploy the Express backend with both MySQL databases on a persistent Node.js host, point the frontend `/api` route at that backend, remove `VITE_EXTERNAL_AUTH_ORIGIN`, and register your own production callback URL with Roblox. The current backend expects persistent database connections and is not packaged as a Vercel Serverless Function.
 
+Hosted MySQL services can be configured with `DB_HOST` and `DB_PORT`; both required databases must exist on that server and the configured users must have access to them.
+
 See Vercel's documentation for [monorepos](https://vercel.com/docs/monorepos), [build configuration](https://vercel.com/docs/deployments/configure-a-build), and [environment variables](https://vercel.com/docs/environment-variables).
 
 ## Commands
@@ -108,6 +125,8 @@ npm run dev:frontend    # Frontend only
 npm run dev:backend     # Backend only; requires .env
 npm run build           # Build every workspace
 npm run build:frontend  # Build shared package and frontend
+npm run db:up           # Start the provisioned local MySQL service
+npm run db:down         # Stop local MySQL and retain its data
 npm run start           # Start the production Express server
 ```
 

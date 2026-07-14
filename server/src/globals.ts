@@ -52,9 +52,10 @@ export class GlobalsClient {
 
     protected readonly _pool: mysql.Pool;
 
-    public constructor(user: string, password: string) {
+    public constructor(user: string, password: string, host = "localhost", port = 3306) {
         this._pool = mysql.createPool({
-            host: "localhost",
+            host: host,
+            port: port,
             user: user,
             password: password,
             database: "strafes_globals",
