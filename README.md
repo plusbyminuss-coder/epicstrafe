@@ -19,8 +19,6 @@ This repository is based on the original MIT-licensed [`fiveman1/strafes-site`](
 - npm 10 or newer
 - A browser with WebGPU support for replay playback
 
-No database or Roblox OAuth setup is required. Local development and Vercel deployments use the existing public StrafesNET API automatically.
-
 ## Run the public frontend locally
 
 This is the quickest way to work on the design. In development, Vite proxies public `/api` requests to the original Strafes API.
