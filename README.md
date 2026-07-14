@@ -49,7 +49,7 @@ The complete backend provides same-origin Roblox OAuth, account settings, tier v
    npm run db:up
    ```
 
-2. Copy `.env.example` to `.env`. The template already contains the matching safe local database credentials.
+2. Copy `server/.env.example` to `.env` in the repository root. The template already contains the matching safe local database credentials.
 3. Add your Strafes API key, Roblox OAuth client ID/secret, and a new cookie secret to `.env`.
 4. Seed `strafes_globals` with [`fiveman1/strafes-globals-db`](https://github.com/fiveman1/strafes-globals-db) using the same database credentials. Run its `npm run dev-seed` command once, then schedule its normal refresh command hourly if you operate an independent backend.
 5. Point `client/.env.local` at the local backend:
@@ -74,7 +74,7 @@ npm run db:logs   # Follow MySQL logs
 npm run db:down   # Stop MySQL while preserving its data volume
 ```
 
-To completely reset local database data, run `docker compose down -v` and then `npm run db:up`. This permanently removes the local Docker volume.
+To completely reset local database data, run `docker compose -f server/compose.yml down -v` and then `npm run db:up`. This permanently removes the local Docker volume.
 
 ## Roblox OAuth setup
 
@@ -98,18 +98,19 @@ COOKIE_SECRET=a_long_random_secret
 
 ## Deploy a frontend preview to Vercel
 
-The included [`vercel.json`](vercel.json) builds the React client, preserves SPA routes, and proxies public API requests to the original Strafes API.
+Import the GitHub repository into [Vercel](https://vercel.com/new), keep the repository root as the project root, and configure:
 
-1. Import the GitHub repository into [Vercel](https://vercel.com/new).
-2. Keep the repository root as the project root.
-3. Vercel will use the included build and output settings.
-4. Add this public build variable in the Vercel project settings:
+- Build command: `npm run build:frontend`
+- Output directory: `client/build`
+- Install command: `npm install`
+
+Add this public build variable in the Vercel project settings:
 
    ```env
    VITE_EXTERNAL_AUTH_ORIGIN=https://strafes.fiveman1.net
    ```
 
-This frontend-only deployment supports public data and replays. Its Login button hands off to the original domain because OAuth sessions cannot be shared across domains.
+The deployment also needs `/api/*` requests proxied to the selected backend and all other routes rewritten to `/index.html`. Its Login button must hand off to the backend's domain because OAuth sessions cannot be shared across domains.
 
 For independent OAuth and account features, deploy the Express backend with both MySQL databases on a persistent Node.js host, point the frontend `/api` route at that backend, remove `VITE_EXTERNAL_AUTH_ORIGIN`, and register your own production callback URL with Roblox. The current backend expects persistent database connections and is not packaged as a Vercel Serverless Function.
 

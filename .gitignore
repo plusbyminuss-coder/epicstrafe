@@ -1,5 +1,6 @@
 # Dependencies
 node_modules/
+package-lock.json
 
 # Builds and caches
 build/
@@ -10,8 +11,8 @@ dist/
 # Local environment files
 .env
 .env.*
-!.env.example
 !client/.env.example
+!server/.env.example
 
 # Editors and operating systems
 .DS_Store
