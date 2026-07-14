@@ -1,15 +1,12 @@
-# EpicStrafe
+# epicstrafe 
 
-Open source website for browsing StrafesNET.
+This repository is based on the original MIT-licensed [`fiveman1/strafes-site`](https://github.com/fiveman1/strafes-site). The refreshed version and improvements were made by **@quadrics** on Discord.
 
-This repository is based on the original MIT-licensed [`fiveman1/strafes-site`](https://github.com/fiveman1/strafes-site). The refreshed version and improvements were made by **@quadrics on Discord**.
+## Improvements
 
-## Features
-
-- User search, profiles, times, and statistics
-- Global records and ranked leaderboards
-- Map browser with filtering, sorting, and CSV export
-
+- World record replay loading times improved
+- Interface + UX improvements
+  
 ## Requirements
 
 - [Node.js](https://nodejs.org/) 22 or newer
@@ -17,7 +14,7 @@ This repository is based on the original MIT-licensed [`fiveman1/strafes-site`](
 
 ## Run the public frontend locally
 
-This is the quickest way to work on the design. In development, Vite proxies public `/api` requests to the original Strafes API.
+This is the quickest way to work on the project. In development, Vite proxies public `/api` requests to the original Strafes API.
 
 ```bash
 git clone https://github.com/plusbyminuss-coder/epicstrafe.git
@@ -27,7 +24,7 @@ npm run build:shared
 npm run dev:frontend
 ```
 
-Open [http://localhost:3000](http://localhost:3000).
+Uses [http://localhost:3000](http://localhost:3000).
 
 ## Commands
 
@@ -46,6 +43,6 @@ For security issues involving authentication, credentials, cookies, or databases
 ## Credits and license
 
 - Original project: [fiveman1/strafes-site](https://github.com/fiveman1/strafes-site)
-- Interface redesign and replay reliability improvements: **@quadrics on Discord**
+- Interface redesign and replay reliability improvements: **@quadrics**
 
 Released under the [MIT License](LICENSE). The original copyright notice is preserved.
