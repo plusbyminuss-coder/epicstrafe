@@ -1,19 +1,38 @@
-import axios from "axios";
+import axios, { AxiosResponse } from "axios";
 import { Game, Map, Pagination, Rank, TimeSortBy, Style, Time, User, RankSortBy, UserSearchData, LeaderboardCount, LeaderboardSortBy, SettingsValues, WRCount, LoginUserWithInfo, TierVoteEligibility, MapTierInfo, Replay } from "shared";
 import { JsonObject } from "../common/utils";
 
+const apiClient = axios.create({
+    baseURL: "/api/",
+    timeout: 15000
+});
+
+const pendingGetRequests = new globalThis.Map<string, Promise<AxiosResponse>>();
+
 async function tryGetRequest(url: string, params?: JsonObject) {
+    const requestKey = `${url}:${JSON.stringify(params ?? {})}`;
+    const pendingRequest = pendingGetRequests.get(requestKey);
+    if (pendingRequest) {
+        return pendingRequest;
+    }
+
+    const request = apiClient.get(url, {params});
+    pendingGetRequests.set(requestKey, request);
+
     try {
-        return await axios.get("/api/" + url, {params: params, timeout: 15000});
+        return await request;
     } 
     catch {
         return null;
+    }
+    finally {
+        pendingGetRequests.delete(requestKey);
     }
 }
 
 export async function tryPostRequest(url: string, params?: JsonObject) {
     try {
-        return await axios.post("/api/" + url, params, {timeout: 5000});
+        return await apiClient.post(url, params, {timeout: 5000});
     } 
     catch {
         return null;

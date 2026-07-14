@@ -161,16 +161,22 @@ function updateDiffDisplay(diffTimeElement: HTMLElement, diffSpeedElement: HTMLE
 }
 
 async function readWithProgress(res: Response, setLength: (len: number) => void, setReceived: (rec: number) => void) {
+    const expectedLength = +(res.headers.get("Content-Length") ?? 0);
     setReceived(0);
-    setLength(+(res.headers.get("Content-Length") ?? 0));
+    setLength(expectedLength);
 
     if (!res.body) {
-        return new Uint8Array(await res.arrayBuffer());
+        const file = new Uint8Array(await res.arrayBuffer());
+        setLength(file.byteLength);
+        setReceived(file.byteLength);
+        return file;
     }
 
     const reader = res.body.getReader();
     const chunks: Uint8Array[] = [];
+    const file = expectedLength > 0 ? new Uint8Array(expectedLength) : null;
     let received = 0;
+    let lastProgressUpdate = performance.now();
 
     try {
         while (true) {
@@ -184,9 +190,21 @@ async function readWithProgress(res: Response, setLength: (len: number) => void,
 
             if (done) break;
 
-            chunks.push(value);
+            if (file && received + value.byteLength <= file.byteLength) {
+                file.set(value, received);
+            }
+            else {
+                if (file && chunks.length === 0 && received > 0) {
+                    chunks.push(file.slice(0, received));
+                }
+                chunks.push(value);
+            }
             received += value.byteLength;
-            setReceived(received);
+            const now = performance.now();
+            if (now - lastProgressUpdate >= 100) {
+                setReceived(received);
+                lastProgressUpdate = now;
+            }
         }
     }
     catch (error) {
@@ -197,7 +215,86 @@ async function readWithProgress(res: Response, setLength: (len: number) => void,
         reader.releaseLock();
     }
 
+    setReceived(received);
+    if (file && chunks.length === 0) {
+        return received === file.byteLength ? file : file.slice(0, received);
+    }
     return chunksToArray(chunks, received);
+}
+
+type ReplayFileProgress = {
+    setLength: (length: number) => void
+    setReceived: (received: number) => void
+};
+
+const noProgress: ReplayFileProgress = {
+    setLength: () => undefined,
+    setReceived: () => undefined
+};
+
+let cachedMapFile: { mapId: number, file: Promise<Uint8Array | null> } | undefined;
+const cachedBotFiles = new Map<string, Promise<Uint8Array | null>>();
+
+async function downloadReplayFile(response: Promise<Response | null>, progress: ReplayFileProgress) {
+    const res = await response;
+    if (!res) return null;
+    return readWithProgress(res, progress.setLength, progress.setReceived);
+}
+
+function getMapFile(mapId: number, progress: ReplayFileProgress) {
+    if (cachedMapFile?.mapId !== mapId) {
+        const file = downloadReplayFile(getMapFileResponse(mapId), progress);
+        cachedMapFile = { mapId, file };
+        void file
+            .then((result) => {
+                if (!result && cachedMapFile?.file === file) cachedMapFile = undefined;
+            })
+            .catch(() => {
+                if (cachedMapFile?.file === file) cachedMapFile = undefined;
+            });
+        return file;
+    }
+
+    return cachedMapFile.file.then((file) => {
+        if (file) {
+            progress.setLength(file.byteLength);
+            progress.setReceived(file.byteLength);
+        }
+        return file;
+    });
+}
+
+function getBotFile(timeId: string, progress: ReplayFileProgress) {
+    let file = cachedBotFiles.get(timeId);
+    if (!file) {
+        file = downloadReplayFile(getBotFileResponse(timeId), progress);
+        cachedBotFiles.set(timeId, file);
+        void file
+            .then((result) => {
+                if (!result) cachedBotFiles.delete(timeId);
+            })
+            .catch(() => cachedBotFiles.delete(timeId));
+
+        while (cachedBotFiles.size > 4) {
+            const oldest = cachedBotFiles.keys().next().value;
+            if (oldest !== undefined) cachedBotFiles.delete(oldest);
+        }
+        return file;
+    }
+
+    return file.then((bot) => {
+        if (bot) {
+            progress.setLength(bot.byteLength);
+            progress.setReceived(bot.byteLength);
+        }
+        return bot;
+    });
+}
+
+// eslint-disable-next-line react-refresh/only-export-components
+export function preloadReplayAssets(timeId: string, mapId: number) {
+    void getMapFile(mapId, noProgress).catch(() => undefined);
+    void getBotFile(timeId, noProgress).catch(() => undefined);
 }
 
 function Replays() {
@@ -282,37 +379,40 @@ function Replays() {
         setLoading(true);
         
         const promise = async () => {
-            if (!("gpu" in navigator) || await navigator.gpu.requestAdapter() === null) {
+            if (!("gpu" in navigator)) {
                 setError("This device does not support WebGPU. Make sure you have hardware acceleration enabled.");
                 return;
             }
-            
-            await init();
 
-            if (isCanceled) return;
+            const mapFilePromise = getMapFile(replay.mapId, {
+                setLength: setMapFileLength,
+                setReceived: setMapFileReceived
+            });
+            const botFilePromise = getBotFile(replay.id, {
+                setLength: setBotFileLength,
+                setReceived: setBotFileReceived
+            });
+            const [adapter, , mapFile, botFile] = await Promise.all([
+                navigator.gpu.requestAdapter(),
+                init(),
+                mapFilePromise,
+                botFilePromise
+            ]);
 
-            const mapPromise = getMapFileResponse(replay.mapId);
-            const botPromise = getBotFileResponse(replay.id);
-            const mapRes = await mapPromise;
-            const botRes = await botPromise;
+            if (adapter === null) {
+                setError("This device does not support WebGPU. Make sure you have hardware acceleration enabled.");
+                return;
+            }
 
-            if (!mapRes) {
+            if (!mapFile) {
                 setError("Couldn't load map file.");
                 return;
             }
 
-            if (!botRes) {
+            if (!botFile) {
                 setError("Couldn't load bot file.");
                 return;
             }
-
-            if (isCanceled) return;
-            
-            const mapFilePromise = readWithProgress(mapRes, setMapFileLength, setMapFileReceived);
-            const botFilePromise = readWithProgress(botRes, setBotFileLength, setBotFileReceived);
-
-            const mapFile = await mapFilePromise;
-            const botFile = await botFilePromise;
 
             if (isCanceled) return;
 
@@ -353,11 +453,11 @@ function Replays() {
                 // hold the player on the loading screen.
                 if (replay.compareTimeId) {
                     void (async () => {
-                        const diffBotRes = await getBotFileResponse(replay.compareTimeId!);
-                        if (!diffBotRes || isCanceled) return;
-
-                        const diffBotFile = await readWithProgress(diffBotRes, setDiffBotFileLength, setDiffBotFileReceived);
-                        if (isCanceled) return;
+                        const diffBotFile = await getBotFile(replay.compareTimeId!, {
+                            setLength: setDiffBotFileLength,
+                            setReceived: setDiffBotFileReceived
+                        });
+                        if (!diffBotFile || isCanceled) return;
 
                         try {
                             const diffBot = new CompleteBot(diffBotFile);

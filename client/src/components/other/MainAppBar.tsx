@@ -64,15 +64,32 @@ function AppLinks(props: IAppMenuProps) {
     }
 
     const linkStyle = (selected: boolean) => ({
+        position: "relative",
         minWidth: 92,
         height: Math.min(appBarHeight - 12, 44),
         px: 2,
         color: selected ? "text.primary" : "text.secondary",
         backgroundColor: selected ? "action.selected" : "transparent",
         fontWeight: selected ? 700 : 500,
+        boxShadow: selected ? "0 8px 24px rgba(236, 59, 131, 0.10), inset 0 0 0 1px rgba(236, 59, 131, 0.10)" : "none",
+        transition: "color 200ms ease, background-color 200ms ease, box-shadow 200ms ease, transform 200ms ease",
+        "&::after": {
+            content: '\"\"',
+            position: "absolute",
+            left: "50%",
+            bottom: 4,
+            width: selected ? 18 : 0,
+            height: 2,
+            borderRadius: 2,
+            bgcolor: "primary.main",
+            boxShadow: selected ? "0 0 12px rgba(236, 59, 131, 0.75)" : "none",
+            transform: "translateX(-50%)",
+            transition: "width 220ms cubic-bezier(0.22, 1, 0.36, 1)"
+        },
         "&:hover": {
             color: "text.primary",
-            backgroundColor: "action.hover"
+            backgroundColor: "action.hover",
+            transform: "translateY(-1px)"
         }
     });
 
@@ -88,6 +105,10 @@ function AppLinks(props: IAppMenuProps) {
             borderColor="divider"
             borderRadius="13px"
             bgcolor="action.hover"
+            sx={{
+                backdropFilter: "blur(18px) saturate(150%)",
+                boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.035)"
+            }}
         >
             <Button href={userLink} 
                 color="inherit"
@@ -214,9 +235,11 @@ function MainAppBar(props: IMainAppBarProps) {
                             width="38px"
                             sx={{
                                 borderRadius: "10px",
-                                transition: "transform 0.2s ease",
+                                filter: "drop-shadow(0 6px 12px rgba(236, 59, 131, 0.22))",
+                                transition: "transform 260ms cubic-bezier(0.22, 1, 0.36, 1), filter 260ms ease",
                                 "&:hover": {
-                                    transform: "translateY(-1px)"
+                                    transform: "translateY(-2px) rotate(-3deg) scale(1.04)",
+                                    filter: "drop-shadow(0 8px 16px rgba(236, 59, 131, 0.38))"
                                 }
                             }}
                         />

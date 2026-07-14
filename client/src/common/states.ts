@@ -156,7 +156,7 @@ export interface UserSearchInfo {
 
 export function useUserSearch(): UserSearchInfo {
     const [ userText, setUserText ] = useState("");
-    const debounced = useDebounce(userText, 300);
+    const debounced = useDebounce(userText, 180);
     const [ selectedUser, setSelectedUser ] = useState<UserSearchData>({ username: "" });
 
     const optionsQuery = useQuery(queries.users.search(debounced));

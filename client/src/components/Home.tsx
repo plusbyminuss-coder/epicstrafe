@@ -48,7 +48,20 @@ function Home() {
             </Typography>
             <Box width="44px" height="3px" borderRadius="3px" bgcolor="primary.main" mx="auto" mt={2} />
         </Box>
-        <Grid container spacing={smallScreen ? 1.25 : 2} justifyContent="center" width="100%" maxWidth="1050px">
+        <Grid
+            container
+            spacing={smallScreen ? 1.25 : 2}
+            justifyContent="center"
+            width="100%"
+            maxWidth="1050px"
+            sx={{
+                "& > :nth-of-type(1) .MuiCard-root": { animationDelay: "40ms" },
+                "& > :nth-of-type(2) .MuiCard-root": { animationDelay: "90ms" },
+                "& > :nth-of-type(3) .MuiCard-root": { animationDelay: "140ms" },
+                "& > :nth-of-type(4) .MuiCard-root": { animationDelay: "190ms" },
+                "& > :nth-of-type(5) .MuiCard-root": { animationDelay: "240ms" }
+            }}
+        >
             <Grid size={{xs: 12, sm: 6, md: 4}}>
                 <HomeCard href={userLink} title="Users" icon={<PersonIcon />} description="Search user profiles and times" />
             </Grid>
