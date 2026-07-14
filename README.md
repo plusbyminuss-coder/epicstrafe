@@ -35,20 +35,6 @@ npm run dev:frontend
 
 Open [http://localhost:3000](http://localhost:3000).
 
-No environment file is needed. To use a different compatible API while developing, copy [`client/.env.example`](client/.env.example) to `client/.env.local` and update `VITE_API_PROXY_TARGET`.
-
-## Deploy a frontend preview to Vercel
-
-Import the GitHub repository into [Vercel](https://vercel.com/new), keep the repository root as the project root, and configure:
-
-- Build command: `npm run build:frontend`
-- Output directory: `client/build`
-- Install command: `npm install`
-
-The included [`vercel.json`](vercel.json) proxies `/api/*` to the public StrafesNET API and handles client-side routes. No Vercel environment variables are required. Login hands off to the original site because OAuth sessions cannot be shared across domains.
-
-See Vercel's documentation for [monorepos](https://vercel.com/docs/monorepos), [build configuration](https://vercel.com/docs/deployments/configure-a-build), and [environment variables](https://vercel.com/docs/environment-variables).
-
 ## Commands
 
 ```bash
