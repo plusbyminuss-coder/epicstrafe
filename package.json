@@ -27,9 +27,6 @@
         "build:frontend": "npm run build:shared && npm run build --workspace client",
         "build": "npm run build:shared && npm run build --workspace client && npm run build --workspace server",
         "lint": "npm exec --workspace client eslint -- src --ignore-pattern '**/*.d.ts' && npm exec --workspace server eslint -- src && npm exec --workspace shared eslint -- src",
-        "db:up": "docker compose -f server/compose.yml up -d mysql",
-        "db:down": "docker compose -f server/compose.yml down",
-        "db:logs": "docker compose -f server/compose.yml logs -f mysql",
         "start": "NODE_ENV=production npm run start --workspace server"
     }
 }
