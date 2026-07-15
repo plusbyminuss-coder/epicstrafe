@@ -441,9 +441,6 @@ function App() {
                             borderRadius: 10,
                             overflow: "hidden"
                         },
-                        virtualScroller: {
-                            overscrollBehavior: "none"
-                        },
                         columnHeaders: {
                             backgroundColor: isLight ? "#f7f7f9" : "#191922",
                             borderBottom: `1px solid ${border}`

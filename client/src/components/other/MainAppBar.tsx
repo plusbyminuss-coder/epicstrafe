@@ -223,7 +223,7 @@ function MainAppBar(props: IMainAppBarProps) {
         if (url) window.location.href = url;
     }, []);
 
-    const outerWidth = smallScreen ? 46 : 132;
+    const outerWidth = smallScreen ? 52 : 132;
 
     return (
         <AppBar position="sticky">

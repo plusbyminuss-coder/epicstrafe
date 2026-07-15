@@ -270,12 +270,14 @@ function TimesGrid(props: ITimesCardProps) {
     let rowHeight: number | undefined = undefined;
     if (isCompact) rowHeight = 100;
     else if (!hideMap) rowHeight = Math.round(MAP_THUMB_SIZE * 1.6667);
+    const overlayHeight = Math.floor((rowHeight ?? 52) * 0.7) * pageSize;
 
     return (
         <DataGrid
             className="timesGrid"
             columns={gridCols}
             apiRef={apiRef}
+            autoHeight
             pagination
             dataSource={dataSource}
             pageSizeOptions={propPageSize !== undefined && propPageSize !== 10 ? [10, propPageSize] : [10]}
@@ -312,6 +314,7 @@ function TimesGrid(props: ITimesCardProps) {
                 }
             }}
             sx={{
+                "--DataGrid-overlayHeight": `${overlayHeight}px`,
                 ".MuiDataGrid-iconButtonContainer": {
                     display: isCompact ? "none !important" : undefined
                 },

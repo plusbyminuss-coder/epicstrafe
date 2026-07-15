@@ -162,6 +162,7 @@ function RanksCard(props: IRanksCardProps) {
             className="ranksGrid"
             columns={gridCols}
             apiRef={apiRef}
+            autoHeight
             pagination
             dataSource={dataSource}
             pageSizeOptions={[20]}

@@ -175,6 +175,7 @@ function LeaderboardCard(props: IRanksCardProps) {
         <DataGrid
             columns={gridCols}
             apiRef={apiRef}
+            autoHeight
             pagination
             dataSource={dataSource}
             pageSizeOptions={[10]}
@@ -194,6 +195,9 @@ function LeaderboardCard(props: IRanksCardProps) {
             disableColumnFilter
             density="compact"
             disableRowSelectionOnClick
+            sx={{
+                "--DataGrid-overlayHeight": `${70 * 10}px`
+            }}
             slotProps={{
                 basePagination: {
                     material: {
