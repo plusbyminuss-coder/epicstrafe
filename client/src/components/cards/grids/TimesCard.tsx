@@ -145,20 +145,21 @@ function TimesGrid(props: ITimesCardProps) {
     let pageSize = propPageSize ?? 10;
     if (shortScreen) pageSize = 10;
     const initPage = Math.floor(start / pageSize);
+    const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: initPage, pageSize });
     const [maxVisisbleRow, setMaxVisisbleRow] = useState((initPage + 1) * pageSize);
 
     useEffect(() => {
-        apiRef.current?.setPageSize(pageSize);
-    }, [apiRef, pageSize]);
+        setPaginationModel((model) => model.pageSize === pageSize ? model : { ...model, pageSize });
+    }, [pageSize]);
 
 
     useEffect(() => {
         const newKey = getGridKey(userId, mapId, game, style, course, onlyWRs, currentSortBy);
         if (newKey !== gridKey) {
-            apiRef.current?.setPage(0);
+            setPaginationModel((model) => model.page === 0 ? model : { ...model, page: 0 });
             setGridKey(newKey);
         }
-    }, [userId, mapId, game, style, course, onlyWRs, currentSortBy, apiRef, gridKey]);
+    }, [userId, mapId, game, style, course, onlyWRs, currentSortBy, gridKey]);
 
     const placementWidth = currentSortBy !== TimeSortBy.TimeAsc || numDigits(maxVisisbleRow) > 3 ? (numDigits(rowCount) > 5 ? 70 : 62) : 50;
 
@@ -182,6 +183,7 @@ function TimesGrid(props: ITimesCardProps) {
     }, [getSort, setCurrentSortBy]);
 
     const onPageChange = useCallback((model: GridPaginationModel) => {
+        setPaginationModel(model);
         const start = (model.page * model.pageSize) + 1;
         setStart(start);
         setMaxVisisbleRow((model.page + 1) * model.pageSize);
@@ -280,16 +282,13 @@ function TimesGrid(props: ITimesCardProps) {
             autoHeight
             pagination
             dataSource={dataSource}
+            paginationModel={paginationModel}
             pageSizeOptions={propPageSize !== undefined && propPageSize !== 10 ? [10, propPageSize] : [10]}
             rowCount={rowCount}
             rowHeight={rowHeight}
             columnHeaderHeight={isCompact ? 76 : 56}
             initialState={{
                 pagination: {
-                    paginationModel: {
-                        pageSize: pageSize,
-                        page: initPage
-                    },
                     rowCount: 0
                 },
                 sorting: {

@@ -5,16 +5,12 @@ import { useGridSelector } from "@mui/x-data-grid/internals";
 import { numDigits } from "../../../common/utils";
 import SimpleNumberField from "../../forms/SimpleNumberField";
 
-function calcRowNum(page: number, rowsPerPage: number, rowCount: number) {
-    return Math.max(1, Math.min((page + 1) * rowsPerPage, rowCount));
-}
-
 interface NumberGridPaginationProps extends TablePaginationActionsProps {
     rowCount: number
 }
 
 function NumberGridPagination(props: NumberGridPaginationProps) {
-    const { page, onPageChange, className, rowsPerPage, rowCount } = props;
+    const { page, className, rowCount } = props;
 
     const apiRef = useGridApiContext();
     const pageCount = useGridSelector(apiRef, gridPageCountSelector);
@@ -28,15 +24,20 @@ function NumberGridPagination(props: NumberGridPaginationProps) {
     if (rowDigits > 5) showPageInput = !screen430px;
     else if (rowDigits > 4) showPageInput = !screen410px;
 
+    const changePage = useCallback((newPage: number) => {
+        const lastPage = Math.max(0, pageCount - 1);
+        apiRef.current.setPage(Math.max(0, Math.min(newPage, lastPage)));
+    }, [apiRef, pageCount]);
+
     const renderItem = useCallback((item: PaginationRenderItemParams): JSX.Element | null => {
 
         if (item.selected && showPageInput) {
 
-            const width = numDigits(rowCount) * 8 + 28;
+            const width = numDigits(pageCount) * 8 + 28;
             return (
                 <SimpleNumberField
                     size="small"
-                    disabled={rowCount <= rowsPerPage}
+                    disabled={pageCount <= 1}
                     sx={{
                         width: `${width}px`,
                         "& input": {
@@ -45,13 +46,13 @@ function NumberGridPagination(props: NumberGridPaginationProps) {
                             fontSize: "14px"
                         }
                     }}
-                    value={calcRowNum(page, rowsPerPage, rowCount)}
+                    value={page + 1}
                     onValueChange={(value) => {
-                        const newPage = Math.floor((value - 1) / rowsPerPage);
-                        onPageChange(null, newPage);
-                        return calcRowNum(newPage, rowsPerPage, rowCount);
+                        const newPage = value - 1;
+                        changePage(newPage);
+                        return Math.max(1, Math.min(value, pageCount));
                     }}
-                    max={rowCount}
+                    max={pageCount}
                 />
             );
         }
@@ -63,7 +64,7 @@ function NumberGridPagination(props: NumberGridPaginationProps) {
 
 
         return <PaginationItem {...item} />;
-    }, [onPageChange, page, rowCount, rowsPerPage, showPageInput]);
+    }, [changePage, page, pageCount, showPageInput]);
 
     return (
         <Pagination
@@ -74,7 +75,7 @@ function NumberGridPagination(props: NumberGridPaginationProps) {
             showLastButton={!smallScreen}
             siblingCount={0}
             boundaryCount={0}
-            onChange={(event, newPage) => onPageChange(null, newPage - 1)}
+            onChange={(event, newPage) => changePage(newPage - 1)}
             renderItem={renderItem}
         />
     );

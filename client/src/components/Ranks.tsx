@@ -95,6 +95,7 @@ function RanksCard(props: IRanksCardProps) {
     const smallScreen = useMediaQuery("@media screen and (max-width: 600px)");
     const apiRef = useGridApiRef();
     const queryClient = useQueryClient();
+    const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 20 });
 
     const [currentSortBy, setCurrentSortBy] = useQueryState("sort",
         parseAsNumberLiteral([RankSortBy.RankAsc, RankSortBy.SkillAsc])
@@ -106,10 +107,11 @@ function RanksCard(props: IRanksCardProps) {
     const gridCols = useMemo(() => makeColumns(placementWidth), [placementWidth]);
 
     useEffect(() => {
-        apiRef.current?.setPage(0);
-    }, [apiRef, game, style]);
+        setPaginationModel((model) => model.page === 0 ? model : { ...model, page: 0 });
+    }, [currentSortBy, game, style]);
 
     const onPageChange = useCallback((model: GridPaginationModel) => {
+        setPaginationModel(model);
         setMaxPage((model.page + 1) * model.pageSize);
     }, []);
 
@@ -120,7 +122,7 @@ function RanksCard(props: IRanksCardProps) {
             return { rows: [], pageInfo: {hasNextPage: false} }
         }
 
-        const hasMore = ranks.length >= (end - start);
+        const hasMore = ranks.length === (end - start + 1);
         return {
             rows: ranks,
             pageInfo: {hasNextPage: hasMore}
@@ -165,10 +167,10 @@ function RanksCard(props: IRanksCardProps) {
             autoHeight
             pagination
             dataSource={dataSource}
+            paginationModel={paginationModel}
             pageSizeOptions={[20]}
             initialState={{
                 pagination: {
-                    paginationModel: { pageSize: 20 },
                     rowCount: -1
                 },
                 sorting: {
