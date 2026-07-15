@@ -39,7 +39,7 @@ function ConsentDialog() {
             elevation={0}
             sx={{
                 position: "fixed",
-                right: { xs: "32px", sm: "40px", xl: "max(40px, calc((100vw - 1480px) / 2 + 32px))" },
+                right: { xs: "32px", sm: "40px" },
                 bottom: { xs: "32px", sm: "40px" },
                 zIndex: (theme) => theme.zIndex.snackbar,
                 width: "calc(100% - 64px)",
