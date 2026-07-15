@@ -16,6 +16,7 @@ import DiscordIcon from "./components/icons/DiscordIcon";
 import GithubIcon from "./components/icons/GithubIcon";
 import MainAppBar from "./components/other/MainAppBar";
 import { NuqsAdapter } from "nuqs/adapters/react-router/v7";
+import ConsentDialog from "./components/ConsentDialog";
 
 const LinkBehavior = React.forwardRef<
     HTMLAnchorElement,
@@ -494,6 +495,7 @@ function App() {
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline enableColorScheme />
+            <ConsentDialog />
             <MainAppBar loggedInUser={loggedInUser} isUserLoading={loggedInUserLoading} disableSettings={settingsOpen} />
             <Box
                 component="main"

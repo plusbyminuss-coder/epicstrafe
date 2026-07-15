@@ -1,21 +1,23 @@
-import React, { lazy, Suspense } from 'react';
+import React, { lazy, Suspense, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import { createBrowserRouter, RouterProvider } from "react-router";
 import Box from '@mui/material/Box';
 import App from './App';
 import Home from './components/Home';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import Terms from './components/Terms';
+import Privacy from './components/Privacy';
+import { NotFoundPage, RouteErrorPage } from './components/ErrorPage';
+import { loadCompare, loadGlobals, loadMapsHome, loadMapsPage, loadRanks, loadReplays, loadSettings, loadUsers, prefetchCommonRouteModules } from './routeModules';
 
-const Users = lazy(() => import('./components/Users'));
-const Ranks = lazy(() => import('./components/Ranks'));
-const Globals = lazy(() => import('./components/Globals'));
-const MapsPage = lazy(() => import('./components/MapsPage'));
-const Compare = lazy(() => import('./components/Compare'));
-const Terms = lazy(() => import('./components/Terms'));
-const Privacy = lazy(() => import('./components/Privacy'));
-const Settings = lazy(() => import('./components/Settings'));
-const MapsHome = lazy(() => import('./components/MapsHome'));
-const Replays = lazy(() => import('./components/Replays'));
+const Users = lazy(loadUsers);
+const Ranks = lazy(loadRanks);
+const Globals = lazy(loadGlobals);
+const MapsPage = lazy(loadMapsPage);
+const Compare = lazy(loadCompare);
+const Settings = lazy(loadSettings);
+const MapsHome = lazy(loadMapsHome);
+const Replays = lazy(loadReplays);
 
 function withSuspense(Component: React.LazyExoticComponent<React.ComponentType>) {
     return function SuspendedRoute() {
@@ -43,8 +45,6 @@ const LazyRanks = withSuspense(Ranks);
 const LazyGlobals = withSuspense(Globals);
 const LazyMapsPage = withSuspense(MapsPage);
 const LazyCompare = withSuspense(Compare);
-const LazyTerms = withSuspense(Terms);
-const LazyPrivacy = withSuspense(Privacy);
 const LazySettings = withSuspense(Settings);
 const LazyMapsHome = withSuspense(MapsHome);
 const LazyReplays = withSuspense(Replays);
@@ -68,6 +68,7 @@ const router = createBrowserRouter([
     {
         path: "/",
         Component: App,
+        ErrorBoundary: RouteErrorPage,
         children: [
             { index: true, Component: Home },
             { 
@@ -87,15 +88,26 @@ const router = createBrowserRouter([
             { path: "ranks", Component: LazyRanks },
             { path: "globals", Component: LazyGlobals },
             { path: "compare", Component: LazyCompare },
-            { path: "terms", Component: LazyTerms },
-            { path: "privacy", Component: LazyPrivacy },
+            { path: "terms", Component: Terms },
+            { path: "privacy", Component: Privacy },
             { path: "settings", Component: LazySettings },
-            { path: "replays/:id", Component: LazyReplays }
+            { path: "replays/:id", Component: LazyReplays },
+            { path: "*", Component: NotFoundPage }
         ]
     }
 ]);
 
 export default function Index() {
+    useEffect(() => {
+        if ("requestIdleCallback" in window) {
+            const idleId = window.requestIdleCallback(prefetchCommonRouteModules, { timeout: 3000 });
+            return () => window.cancelIdleCallback(idleId);
+        }
+
+        const timeoutId = window.setTimeout(prefetchCommonRouteModules, 1200);
+        return () => window.clearTimeout(timeoutId);
+    }, []);
+
     return (
     <React.StrictMode>
         <QueryClientProvider client={queryClient}>

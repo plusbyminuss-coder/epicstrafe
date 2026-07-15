@@ -10,6 +10,7 @@ import { LoginUser } from "shared";
 import { useAppBarHeight } from "../../common/states";
 import { login } from "../../api/api";
 import AccountMenu from "./AccountMenu";
+import { PrefetchableRoute, prefetchRouteModule } from "../../routeModules";
 
 interface IMainAppBarProps {
     loggedInUser: LoginUser | undefined
@@ -95,6 +96,12 @@ function AppLinks(props: IAppMenuProps) {
         }
     });
 
+    const prefetchProps = (route: PrefetchableRoute) => ({
+        onMouseEnter: () => prefetchRouteModule(route),
+        onFocus: () => prefetchRouteModule(route),
+        onTouchStart: () => prefetchRouteModule(route)
+    });
+
     return (
         <Box
             display="flex"
@@ -112,27 +119,27 @@ function AppLinks(props: IAppMenuProps) {
                 boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 8px 28px rgba(0, 0, 0, 0.08)"
             }}
         >
-            <Button href={userLink}
+            <Button href={userLink} {...prefetchProps("users")}
                 color="inherit"
                 sx={linkStyle(navPage === NavigatorPage.Users)}>
                 {NavigatorPage.Users}
             </Button>
-            <Button href="/globals"
+            <Button href="/globals" {...prefetchProps("globals")}
                 color="inherit"
                 sx={linkStyle(navPage === NavigatorPage.Gloabls)}>
                 {NavigatorPage.Gloabls}
             </Button>
-            <Button href="/maps"
+            <Button href="/maps" {...prefetchProps("maps")}
                 color="inherit"
                 sx={linkStyle(navPage === NavigatorPage.Maps)}>
                 {NavigatorPage.Maps}
             </Button>
-            <Button href="/ranks"
+            <Button href="/ranks" {...prefetchProps("ranks")}
                 color="inherit"
                 sx={linkStyle(navPage === NavigatorPage.Ranks)}>
                 {NavigatorPage.Ranks}
             </Button>
-            <Button href="/compare"
+            <Button href="/compare" {...prefetchProps("compare")}
                 color="inherit"
                 sx={linkStyle(navPage === NavigatorPage.Compare)}>
                 {NavigatorPage.Compare}
