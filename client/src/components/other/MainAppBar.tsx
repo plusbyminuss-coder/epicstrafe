@@ -119,27 +119,27 @@ function AppLinks(props: IAppMenuProps) {
                 boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 8px 28px rgba(0, 0, 0, 0.08)"
             }}
         >
-            <Button href={userLink} {...prefetchProps("users")}
+            <Button href={userLink} {...prefetchProps("users")} disableRipple
                 color="inherit"
                 sx={linkStyle(navPage === NavigatorPage.Users)}>
                 {NavigatorPage.Users}
             </Button>
-            <Button href="/globals" {...prefetchProps("globals")}
+            <Button href="/globals" {...prefetchProps("globals")} disableRipple
                 color="inherit"
                 sx={linkStyle(navPage === NavigatorPage.Gloabls)}>
                 {NavigatorPage.Gloabls}
             </Button>
-            <Button href="/maps" {...prefetchProps("maps")}
+            <Button href="/maps" {...prefetchProps("maps")} disableRipple
                 color="inherit"
                 sx={linkStyle(navPage === NavigatorPage.Maps)}>
                 {NavigatorPage.Maps}
             </Button>
-            <Button href="/ranks" {...prefetchProps("ranks")}
+            <Button href="/ranks" {...prefetchProps("ranks")} disableRipple
                 color="inherit"
                 sx={linkStyle(navPage === NavigatorPage.Ranks)}>
                 {NavigatorPage.Ranks}
             </Button>
-            <Button href="/compare" {...prefetchProps("compare")}
+            <Button href="/compare" {...prefetchProps("compare")} disableRipple
                 color="inherit"
                 sx={linkStyle(navPage === NavigatorPage.Compare)}>
                 {NavigatorPage.Compare}
@@ -172,37 +172,37 @@ function AppMenu(props: IAppMenuProps) {
 
     return (
         <Box>
-            <Button sx={{width: navMenuWidth, height: 42, bgcolor: "action.hover", borderColor: "divider", boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.05)"}} variant="outlined" color="inherit" endIcon={open ? <ArrowDropUpIcon /> : <ArrowDropDownIcon />} onClick={openNavMenu} >
+            <Button disableRipple sx={{width: navMenuWidth, height: 42, bgcolor: "action.hover", borderColor: "divider", boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.05)"}} variant="outlined" color="inherit" endIcon={open ? <ArrowDropUpIcon /> : <ArrowDropDownIcon />} onClick={openNavMenu} >
                 {navPage ?? NavigatorPage.Home}
             </Button>
             <Menu anchorEl={anchorEl} open={open} onClose={closeNavMenu} slotProps={{list: {sx: {width: navMenuWidth}}}} >
                 <Link href="/" variant="inherit" color="inherit" underline="none">
-                    <MenuItem onClick={closeNavMenu} selected={navPage === NavigatorPage.Home} >
+                    <MenuItem disableRipple onClick={closeNavMenu} selected={navPage === NavigatorPage.Home} >
                         {NavigatorPage.Home}
                     </MenuItem>
                 </Link>
                 <Link href={userLink} variant="inherit" color="inherit" underline="none">
-                    <MenuItem onClick={closeNavMenu} selected={navPage === NavigatorPage.Users} >
+                    <MenuItem disableRipple onClick={closeNavMenu} selected={navPage === NavigatorPage.Users} >
                         {NavigatorPage.Users}
                     </MenuItem>
                 </Link>
                 <Link href="/globals" variant="inherit" color="inherit" underline="none">
-                    <MenuItem onClick={closeNavMenu} selected={navPage === NavigatorPage.Gloabls} >
+                    <MenuItem disableRipple onClick={closeNavMenu} selected={navPage === NavigatorPage.Gloabls} >
                         {NavigatorPage.Gloabls}
                     </MenuItem>
                 </Link>
                 <Link href="/maps" variant="inherit" color="inherit" underline="none">
-                    <MenuItem onClick={closeNavMenu} selected={navPage === NavigatorPage.Maps} >
+                    <MenuItem disableRipple onClick={closeNavMenu} selected={navPage === NavigatorPage.Maps} >
                         {NavigatorPage.Maps}
                     </MenuItem>
                 </Link>
                 <Link href="/ranks" variant="inherit" color="inherit" underline="none">
-                    <MenuItem onClick={closeNavMenu} selected={navPage === NavigatorPage.Ranks} >
+                    <MenuItem disableRipple onClick={closeNavMenu} selected={navPage === NavigatorPage.Ranks} >
                         {NavigatorPage.Ranks}
                     </MenuItem>
                 </Link>
                 <Link href="/compare" variant="inherit" color="inherit" underline="none">
-                    <MenuItem onClick={closeNavMenu} selected={navPage === NavigatorPage.Compare} >
+                    <MenuItem disableRipple onClick={closeNavMenu} selected={navPage === NavigatorPage.Compare} >
                         {NavigatorPage.Compare}
                     </MenuItem>
                 </Link>

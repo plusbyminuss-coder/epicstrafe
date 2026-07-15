@@ -3,7 +3,7 @@ import { Box, Button, Link, Paper, Typography } from "@mui/material";
 import GppGoodRoundedIcon from "@mui/icons-material/GppGoodRounded";
 
 const CONSENT_COOKIE = "strafes_policy_consent";
-const CONSENT_VALUE = "accepted";
+const CONSENT_VALUE = "accepted-v2";
 const ONE_YEAR = 60 * 60 * 24 * 365;
 
 function hasAcceptedPolicies() {
@@ -19,7 +19,7 @@ function ConsentDialog() {
     useEffect(() => {
         if (state !== "closing") return;
 
-        const timeoutId = window.setTimeout(() => setState("closed"), 380);
+        const timeoutId = window.setTimeout(() => setState("closed"), 580);
         return () => window.clearTimeout(timeoutId);
     }, [state]);
 
@@ -39,13 +39,14 @@ function ConsentDialog() {
             elevation={0}
             sx={{
                 position: "fixed",
-                right: { xs: 2, sm: 3 },
-                bottom: { xs: 2, sm: 3 },
+                right: { xs: "32px", sm: "40px", xl: "max(40px, calc((100vw - 1480px) / 2 + 32px))" },
+                bottom: { xs: "32px", sm: "40px" },
                 zIndex: (theme) => theme.zIndex.snackbar,
-                width: "calc(100% - 32px)",
-                maxWidth: 410,
-                p: { xs: 2.25, sm: 2.75 },
-                borderRadius: "20px",
+                width: "calc(100% - 64px)",
+                maxWidth: 350,
+                p: { xs: 2, sm: 2.25 },
+                borderRadius: "18px",
+                overflow: "hidden",
                 backgroundImage: (theme) => theme.palette.mode === "light"
                     ? "linear-gradient(145deg, rgba(255,255,255,0.96), rgba(250,245,251,0.92))"
                     : "linear-gradient(145deg, rgba(25,26,40,0.96), rgba(13,14,24,0.94))",
@@ -55,30 +56,47 @@ function ConsentDialog() {
                 boxShadow: "0 22px 70px rgba(0, 0, 0, 0.4), 0 0 40px rgba(255, 79, 154, 0.1)",
                 pointerEvents: state === "closing" ? "none" : "auto",
                 animation: state === "closing"
-                    ? "consentPopupOut 360ms cubic-bezier(0.4, 0, 1, 1) both"
+                    ? "consentPopupConfirm 560ms cubic-bezier(0.22, 1, 0.36, 1) both"
                     : "consentPopupIn 620ms cubic-bezier(0.16, 1, 0.3, 1) both",
+                "&::after": {
+                    content: '""',
+                    position: "absolute",
+                    inset: 0,
+                    borderRadius: "inherit",
+                    pointerEvents: "none",
+                    opacity: 0,
+                    boxShadow: "inset 0 0 0 1px rgba(255, 134, 186, 0.9), inset 0 0 34px rgba(255, 79, 154, 0.22), 0 0 36px rgba(93, 217, 255, 0.18)",
+                    animation: state === "closing" ? "consentConfirmGlow 560ms ease-out both" : "none"
+                },
                 "@keyframes consentPopupIn": {
                     from: { opacity: 0, transform: "translate3d(28px, 24px, 0) scale(0.94)" },
                     to: { opacity: 1, transform: "translate3d(0, 0, 0) scale(1)" }
                 },
-                "@keyframes consentPopupOut": {
-                    from: { opacity: 1, transform: "translate3d(0, 0, 0) scale(1)" },
-                    to: { opacity: 0, transform: "translate3d(24px, 18px, 0) scale(0.96)" }
+                "@keyframes consentPopupConfirm": {
+                    "0%": { opacity: 1, transform: "translate3d(0, 0, 0) scale(1)", filter: "blur(0)" },
+                    "22%": { opacity: 1, transform: "translate3d(0, 2px, 0) scale(0.975)", filter: "blur(0)" },
+                    "52%": { opacity: 1, transform: "translate3d(0, -6px, 0) scale(1.018)", filter: "blur(0)" },
+                    "100%": { opacity: 0, transform: "translate3d(18px, -12px, 0) scale(0.96)", filter: "blur(5px)" }
+                },
+                "@keyframes consentConfirmGlow": {
+                    "0%": { opacity: 0 },
+                    "35%": { opacity: 1 },
+                    "100%": { opacity: 0 }
                 },
                 "@media (prefers-reduced-motion: reduce)": {
                     animationDuration: "0.01ms"
                 }
             }}
         >
-            <Box display="flex" alignItems="flex-start" gap={1.75}>
+            <Box display="flex" alignItems="flex-start" gap={1.4}>
                 <Box
                     display="flex"
                     flexShrink={0}
                     alignItems="center"
                     justifyContent="center"
-                    width={48}
-                    height={48}
-                    borderRadius="15px"
+                    width={42}
+                    height={42}
+                    borderRadius="13px"
                     sx={{
                         color: "primary.light",
                         background: "linear-gradient(135deg, rgba(255, 79, 154, 0.22), rgba(93, 217, 255, 0.13))",
@@ -86,14 +104,14 @@ function ConsentDialog() {
                         boxShadow: "0 10px 30px rgba(255, 79, 154, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.12)"
                     }}
                 >
-                    <GppGoodRoundedIcon sx={{ fontSize: 27 }} />
+                    <GppGoodRoundedIcon sx={{ fontSize: 24 }} />
                 </Box>
                 <Box minWidth={0}>
-                    <Typography id="policy-consent-title" variant="h6" component="h2" mb={0.5} fontWeight={700}>
+                    <Typography id="policy-consent-title" component="h2" mb={0.35} fontSize="1rem" fontWeight={700}>
                         Privacy and terms
                     </Typography>
-                    <Typography id="policy-consent-description" variant="body2" color="text.secondary" lineHeight={1.6}>
-                        By continuing, you accept our <Link href="/terms" target="_blank" rel="noopener noreferrer" fontWeight={600}>Terms</Link> and <Link href="/privacy" target="_blank" rel="noopener noreferrer" fontWeight={600}>Privacy Policy</Link>.
+                    <Typography id="policy-consent-description" color="text.secondary" fontSize="0.8rem" lineHeight={1.55}>
+                        By continuing, you accept our <Link href="/terms" fontWeight={600}>Terms</Link> and <Link href="/privacy" fontWeight={600}>Privacy Policy</Link>.
                     </Typography>
                 </Box>
             </Box>
@@ -102,11 +120,17 @@ function ConsentDialog() {
                 variant="contained"
                 onClick={acceptPolicies}
                 sx={{
-                    mt: 2.25,
-                    minHeight: 44,
-                    borderRadius: "12px",
+                    mt: 1.75,
+                    minHeight: 40,
+                    borderRadius: "11px",
                     background: "linear-gradient(110deg, #ff4f9a, #e83882)",
                     boxShadow: "0 10px 26px rgba(255, 79, 154, 0.26)",
+                    animation: state === "closing" ? "consentButtonConfirm 560ms ease-out both" : "none",
+                    "@keyframes consentButtonConfirm": {
+                        "0%": { filter: "brightness(1)" },
+                        "35%": { filter: "brightness(1.25)", boxShadow: "0 0 28px rgba(255, 79, 154, 0.55)" },
+                        "100%": { filter: "brightness(1)" }
+                    },
                     "&:hover": {
                         background: "linear-gradient(110deg, #ff68a9, #ed438c)",
                         boxShadow: "0 13px 32px rgba(255, 79, 154, 0.36)",
@@ -114,7 +138,7 @@ function ConsentDialog() {
                     }
                 }}
             >
-                Accept
+                {state === "closing" ? "Accepted" : "Accept"}
             </Button>
         </Paper>
     );
