@@ -14,26 +14,22 @@ function hasAcceptedPolicies() {
 }
 
 function ConsentDialog() {
-    const [accepted, setAccepted] = useState(hasAcceptedPolicies);
-    const [open, setOpen] = useState(false);
+    const [state, setState] = useState<"open" | "closing" | "closed">(() => hasAcceptedPolicies() ? "closed" : "open");
 
     useEffect(() => {
-        if (accepted) return;
+        if (state !== "closing") return;
 
-        const showConsent = () => setOpen(true);
-        window.addEventListener("pointermove", showConsent, { once: true, passive: true });
-
-        return () => window.removeEventListener("pointermove", showConsent);
-    }, [accepted]);
+        const timeoutId = window.setTimeout(() => setState("closed"), 380);
+        return () => window.clearTimeout(timeoutId);
+    }, [state]);
 
     const acceptPolicies = useCallback(() => {
         const secure = window.location.protocol === "https:" ? "; Secure" : "";
         document.cookie = `${CONSENT_COOKIE}=${CONSENT_VALUE}; Path=/; Max-Age=${ONE_YEAR}; SameSite=Lax${secure}`;
-        setOpen(false);
-        setAccepted(true);
+        setState("closing");
     }, []);
 
-    if (!open || accepted) return null;
+    if (state === "closed") return null;
 
     return (
         <Paper
@@ -57,10 +53,17 @@ function ConsentDialog() {
                 borderColor: "divider",
                 backdropFilter: "blur(26px) saturate(165%)",
                 boxShadow: "0 22px 70px rgba(0, 0, 0, 0.4), 0 0 40px rgba(255, 79, 154, 0.1)",
-                animation: "consentPopupIn 620ms cubic-bezier(0.16, 1, 0.3, 1) both",
+                pointerEvents: state === "closing" ? "none" : "auto",
+                animation: state === "closing"
+                    ? "consentPopupOut 360ms cubic-bezier(0.4, 0, 1, 1) both"
+                    : "consentPopupIn 620ms cubic-bezier(0.16, 1, 0.3, 1) both",
                 "@keyframes consentPopupIn": {
                     from: { opacity: 0, transform: "translate3d(28px, 24px, 0) scale(0.94)" },
                     to: { opacity: 1, transform: "translate3d(0, 0, 0) scale(1)" }
+                },
+                "@keyframes consentPopupOut": {
+                    from: { opacity: 1, transform: "translate3d(0, 0, 0) scale(1)" },
+                    to: { opacity: 0, transform: "translate3d(24px, 18px, 0) scale(0.96)" }
                 },
                 "@media (prefers-reduced-motion: reduce)": {
                     animationDuration: "0.01ms"
