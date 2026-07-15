@@ -16,6 +16,7 @@ import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { useQueryClient } from "@tanstack/react-query";
 import { queries } from "../api/queries";
 import { parseAsNumberLiteral, useQueryState } from "nuqs";
+import NumberGridPagination from "./cards/grids/NumberGridPagination";
 
 function makeColumns(placementWidth: number) {
     const cols: GridColDef[] = [];
@@ -182,6 +183,13 @@ function RanksCard(props: IRanksCardProps) {
             disableRowSelectionOnClick
             onPaginationModelChange={onPageChange}
             onSortModelChange={onSortChanged}
+            slotProps={{
+                basePagination: {
+                    material: {
+                        ActionsComponent: (props) => <NumberGridPagination rowCount={-1} allowAnyPage {...props} />
+                    }
+                }
+            }}
             sx={{
                 "--DataGrid-overlayHeight": `${36 * 20}px`
             }}
