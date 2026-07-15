@@ -4,8 +4,9 @@ This repository is based on the original MIT-licensed [`fiveman1/strafes-site`](
 
 ## Improvements
 
-- World record replay loading times improved
-- Interface + UX improvements
+- World record replay loading times
+- Interface
+- UX
   
 ## Requirements
 
