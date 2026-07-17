@@ -25,7 +25,6 @@ import { queries } from "../api/queries";
 import CountryFlag from "./displays/CountryFlag";
 
 const ASPECT_RATIO = 16 / 9;
-const REPLAY_READ_TIMEOUT = 20000;
 
 function getPlayerHeight(width: number, height: number) {
     if (width / height > ASPECT_RATIO) {
@@ -180,13 +179,7 @@ async function readWithProgress(res: Response, setLength: (len: number) => void,
 
     try {
         while (true) {
-            let timeout = 0;
-            const read = reader.read();
-            const stalled = new Promise<never>((_, reject) => {
-                timeout = window.setTimeout(() => reject(new Error("Replay asset download timed out.")), REPLAY_READ_TIMEOUT);
-            });
-            const { done, value } = await Promise.race([read, stalled]);
-            window.clearTimeout(timeout);
+            const { done, value } = await reader.read();
 
             if (done) break;
 

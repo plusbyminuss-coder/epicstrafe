@@ -273,15 +273,12 @@ export async function getReplayById(id: string) {
     return res.data as Replay;
 }
 
-const REPLAY_ASSET_TIMEOUT = 15000;
 const REPLAY_ASSET_ATTEMPTS = 2;
 
 async function fetchReplayAsset(url: string) {
     for (let attempt = 0; attempt < REPLAY_ASSET_ATTEMPTS; ++attempt) {
-        const controller = new AbortController();
-        const timeout = window.setTimeout(() => controller.abort(), REPLAY_ASSET_TIMEOUT);
         try {
-            const response = await fetch(url, { signal: controller.signal });
+            const response = await fetch(url);
             if (response.ok) {
                 return response;
             }
@@ -290,9 +287,6 @@ async function fetchReplayAsset(url: string) {
             if (attempt === REPLAY_ASSET_ATTEMPTS - 1) {
                 console.warn("Replay asset download failed", error);
             }
-        }
-        finally {
-            window.clearTimeout(timeout);
         }
     }
 
