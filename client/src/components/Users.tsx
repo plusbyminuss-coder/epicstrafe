@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import Box from "@mui/material/Box";
 import { Breadcrumbs, Button, Checkbox, FormControlLabel, FormGroup, FormHelperText, Link, Switch, Typography, useMediaQuery } from "@mui/material";
 import UserCard from "./cards/UserCard";
@@ -19,6 +19,7 @@ import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import { parseAsBoolean, useQueryState } from "nuqs";
 import { useQuery } from "@tanstack/react-query";
 import { queries } from "../api/queries";
+import { useNavigationCacheState } from "../common/navigationCache";
 
 function Users() {
     const { id } = useParams();
@@ -32,9 +33,9 @@ function Users() {
     const userLoading = userQuery.isLoading;
     
     const { game, setGame, style, setStyle } = useGameStyle(true);
-    const [ advanced, setAdvanced ] = useState(false);
+    const [ advanced, setAdvanced ] = useNavigationCacheState("users.advanced", false);
     const userSearch = useUserSearch();
-    const [ viewedTimes, setViewedTimes ] = useState<Time[]>([]);
+    const [ viewedTimes, setViewedTimes ] = useNavigationCacheState<Time[]>("users.viewedTimes", []);
 
     const smallScreen = useMediaQuery("@media screen and (max-width: 600px)");
     const smallScreenProfile = useMediaQuery("@media screen and (max-width: 800px)");
@@ -46,7 +47,7 @@ function Users() {
             }
             return [...viewed];
         });
-    }, []);
+    }, [setViewedTimes]);
 
     const uniqueTimes = useMemo(() => {
         if (!advanced) {
@@ -78,7 +79,7 @@ function Users() {
     const onResetViewed = useCallback(() => {
         setViewedTimes([]);
         apiRef.current?.dataSource.cache.clear();
-    }, [apiRef]);
+    }, [apiRef, setViewedTimes]);
 
     const breadcrumbs: React.ReactElement[] = [];
     if (user) {

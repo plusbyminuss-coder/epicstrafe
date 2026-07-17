@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import Box from "@mui/material/Box";
 import { Breadcrumbs, Link, Paper, Tooltip, Typography, useMediaQuery } from "@mui/material";
 import { Game, Rank, RankSortBy, Style, formatRank, formatSkill } from "shared";
@@ -17,6 +17,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { queries } from "../api/queries";
 import { parseAsNumberLiteral, useQueryState } from "nuqs";
 import NumberGridPagination from "./cards/grids/NumberGridPagination";
+import { useNavigationCacheState } from "../common/navigationCache";
 
 function makeColumns(placementWidth: number) {
     const cols: GridColDef[] = [];
@@ -92,11 +93,11 @@ interface IRanksCardProps {
 function RanksCard(props: IRanksCardProps) {
     const { game, style } = props;
 
-    const [maxPage, setMaxPage] = useState(0);
     const smallScreen = useMediaQuery("@media screen and (max-width: 600px)");
     const apiRef = useGridApiRef();
     const queryClient = useQueryClient();
-    const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 20 });
+    const [paginationModel, setPaginationModel] = useNavigationCacheState<GridPaginationModel>("ranks.pagination", { page: 0, pageSize: 20 });
+    const [maxPage, setMaxPage] = useNavigationCacheState("ranks.maxPage", (paginationModel.page + 1) * paginationModel.pageSize);
 
     const [currentSortBy, setCurrentSortBy] = useQueryState("sort",
         parseAsNumberLiteral([RankSortBy.RankAsc, RankSortBy.SkillAsc])
@@ -106,15 +107,20 @@ function RanksCard(props: IRanksCardProps) {
 
     const placementWidth = numDigits(maxPage) > 3 ? 62 : 50;
     const gridCols = useMemo(() => makeColumns(placementWidth), [placementWidth]);
+    const filterKey = `${game}|${style}|${currentSortBy}`;
+    const previousFilterKey = useRef(filterKey);
 
     useEffect(() => {
-        setPaginationModel((model) => model.page === 0 ? model : { ...model, page: 0 });
-    }, [currentSortBy, game, style]);
+        if (previousFilterKey.current !== filterKey) {
+            setPaginationModel((model) => model.page === 0 ? model : { ...model, page: 0 });
+            previousFilterKey.current = filterKey;
+        }
+    }, [filterKey, setPaginationModel]);
 
     const onPageChange = useCallback((model: GridPaginationModel) => {
         setPaginationModel(model);
         setMaxPage((model.page + 1) * model.pageSize);
-    }, []);
+    }, [setMaxPage, setPaginationModel]);
 
     const updateRowData = useCallback(async (start: number, end: number, sortBy: RankSortBy) => {
         const ranks = await queryClient.fetchQuery(queries.ranks.ranks(start, end, sortBy, game, style));

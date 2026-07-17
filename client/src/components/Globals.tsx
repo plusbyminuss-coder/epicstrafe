@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Box from "@mui/material/Box";
 import { Breadcrumbs, Link, Paper, Typography } from "@mui/material";
 import TimesCard from "./cards/grids/TimesCard";
@@ -7,7 +7,7 @@ import GameSelector from "./forms/GameSelector";
 import StyleSelector from "./forms/StyleSelector";
 import IncludeBonusCheckbox from "./forms/IncludeBonusCheckbox";
 import { Game, Style } from "shared";
-import { DataGrid, GridColDef, GridDataSource, GridGetRowsParams, GridGetRowsResponse, GridPaginationModel, GridRenderCellParams, useGridApiRef } from "@mui/x-data-grid";
+import { DataGrid, GridColDef, GridDataSource, GridGetRowsParams, GridGetRowsResponse, GridPaginationModel, GridRenderCellParams, GridSortModel, useGridApiRef } from "@mui/x-data-grid";
 import { yellow } from "@mui/material/colors";
 import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import { makeUserColumn } from "./cards/grids/util/columns";
@@ -17,6 +17,7 @@ import NumberGridPagination from "./cards/grids/NumberGridPagination";
 import MapLink from "./displays/MapLink";
 import { useQueryClient } from "@tanstack/react-query";
 import { queries } from "../api/queries";
+import { useNavigationCacheState } from "../common/navigationCache";
 
 function Globals() {
     const {game, setGame, style, setStyle} = useGameStyle(true);
@@ -125,13 +126,19 @@ function LeaderboardCard(props: IRanksCardProps) {
     const [rowCount, setRowCount] = useState(0);
     const apiRef = useGridApiRef();
     const queryClient = useQueryClient();
-    const [paginationModel, setPaginationModel] = useState<GridPaginationModel>({ page: 0, pageSize: 10 });
+    const [paginationModel, setPaginationModel] = useNavigationCacheState<GridPaginationModel>("globals.leaderboard.pagination", { page: 0, pageSize: 10 });
+    const [sortModel, setSortModel] = useNavigationCacheState<GridSortModel>("globals.leaderboard.sort", [{ field: "count", sort: "desc" }]);
+    const filterKey = `${game}|${style}`;
+    const previousFilterKey = useRef(filterKey);
 
     const gridCols = makeColumns(game, style);
 
     useEffect(() => {
-        setPaginationModel((model) => model.page === 0 ? model : { ...model, page: 0 });
-    }, [game, style]);
+        if (previousFilterKey.current !== filterKey) {
+            setPaginationModel((model) => model.page === 0 ? model : { ...model, page: 0 });
+            previousFilterKey.current = filterKey;
+        }
+    }, [filterKey, setPaginationModel]);
 
     const updateRowData = useCallback(async (start: number, end: number, sort: LeaderboardSortBy) => {
         const page = await queryClient.fetchQuery(queries.wrs.leaderboards(start, end, game, style, sort));
@@ -146,7 +153,8 @@ function LeaderboardCard(props: IRanksCardProps) {
         };
     }, [game, queryClient, style]);
 
-    const onSortChange = () => {
+    const onSortChange = (model: GridSortModel) => {
+        setSortModel(model);
         apiRef.current?.setPage(0);
     };
 
@@ -180,6 +188,7 @@ function LeaderboardCard(props: IRanksCardProps) {
             pagination
             dataSource={dataSource}
             paginationModel={paginationModel}
+            sortModel={sortModel}
             onPaginationModelChange={setPaginationModel}
             pageSizeOptions={[10]}
             rowCount={rowCount}

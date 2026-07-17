@@ -17,6 +17,7 @@ import GithubIcon from "./components/icons/GithubIcon";
 import MainAppBar from "./components/other/MainAppBar";
 import { NuqsAdapter } from "nuqs/adapters/react-router/v7";
 import ConsentDialog from "./components/ConsentDialog";
+import { rememberCurrentRoute } from "./common/navigationCache";
 
 const LinkBehavior = React.forwardRef<
     HTMLAnchorElement,
@@ -39,6 +40,13 @@ function App() {
 
     const smallScreen = useMediaQuery("@media screen and (max-width: 480px)");
     const location = useLocation();
+
+    useEffect(() => {
+        rememberCurrentRoute();
+
+        document.addEventListener("click", rememberCurrentRoute, true);
+        return () => document.removeEventListener("click", rememberCurrentRoute, true);
+    }, [location.pathname, location.search]);
 
     const setSettings = useCallback((settings: SettingsValues) => {
         setMode(settings.theme);

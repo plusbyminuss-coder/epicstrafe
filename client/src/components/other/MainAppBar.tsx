@@ -11,6 +11,7 @@ import { useAppBarHeight } from "../../common/states";
 import { login } from "../../api/api";
 import AccountMenu from "./AccountMenu";
 import { PrefetchableRoute, prefetchRouteModule } from "../../routeModules";
+import { CachedRoute, getCachedRoute, getCachedRouteHref } from "../../common/navigationCache";
 
 interface IMainAppBarProps {
     loggedInUser: LoginUser | undefined
@@ -58,9 +59,12 @@ function AppLinks(props: IAppMenuProps) {
     const location = useLocation();
     const navPage = getCurrentPage(location.pathname);
     const appBarHeight = useAppBarHeight();
+    getCachedRoute(location.pathname, location.search);
 
-    let userLink = "/users";
-    if (loggedInUser) {
+    const cachedHref = (route: CachedRoute, fallback: string) => getCachedRouteHref(route, fallback);
+
+    let userLink = getCachedRouteHref("users", "/users");
+    if (loggedInUser && userLink === "/users") {
         userLink += `/${loggedInUser.userId}`
     }
 
@@ -124,22 +128,22 @@ function AppLinks(props: IAppMenuProps) {
                 sx={linkStyle(navPage === NavigatorPage.Users)}>
                 {NavigatorPage.Users}
             </Button>
-            <Button href="/globals" {...prefetchProps("globals")} disableRipple
+            <Button href={cachedHref("globals", "/globals")} {...prefetchProps("globals")} disableRipple
                 color="inherit"
                 sx={linkStyle(navPage === NavigatorPage.Gloabls)}>
                 {NavigatorPage.Gloabls}
             </Button>
-            <Button href="/maps" {...prefetchProps("maps")} disableRipple
+            <Button href={cachedHref("maps", "/maps")} {...prefetchProps("maps")} disableRipple
                 color="inherit"
                 sx={linkStyle(navPage === NavigatorPage.Maps)}>
                 {NavigatorPage.Maps}
             </Button>
-            <Button href="/ranks" {...prefetchProps("ranks")} disableRipple
+            <Button href={cachedHref("ranks", "/ranks")} {...prefetchProps("ranks")} disableRipple
                 color="inherit"
                 sx={linkStyle(navPage === NavigatorPage.Ranks)}>
                 {NavigatorPage.Ranks}
             </Button>
-            <Button href="/compare" {...prefetchProps("compare")} disableRipple
+            <Button href={cachedHref("compare", "/compare")} {...prefetchProps("compare")} disableRipple
                 color="inherit"
                 sx={linkStyle(navPage === NavigatorPage.Compare)}>
                 {NavigatorPage.Compare}
@@ -154,9 +158,10 @@ function AppMenu(props: IAppMenuProps) {
     const open = Boolean(anchorEl);
     const location = useLocation();
     const navPage = getCurrentPage(location.pathname);
+    getCachedRoute(location.pathname, location.search);
 
-    let userLink = "/users";
-    if (loggedInUser) {
+    let userLink = getCachedRouteHref("users", "/users");
+    if (loggedInUser && userLink === "/users") {
         userLink += `/${loggedInUser.userId}`
     }
 
@@ -186,22 +191,22 @@ function AppMenu(props: IAppMenuProps) {
                         {NavigatorPage.Users}
                     </MenuItem>
                 </Link>
-                <Link href="/globals" variant="inherit" color="inherit" underline="none">
+                <Link href={getCachedRouteHref("globals", "/globals")} variant="inherit" color="inherit" underline="none">
                     <MenuItem disableRipple onClick={closeNavMenu} selected={navPage === NavigatorPage.Gloabls} >
                         {NavigatorPage.Gloabls}
                     </MenuItem>
                 </Link>
-                <Link href="/maps" variant="inherit" color="inherit" underline="none">
+                <Link href={getCachedRouteHref("maps", "/maps")} variant="inherit" color="inherit" underline="none">
                     <MenuItem disableRipple onClick={closeNavMenu} selected={navPage === NavigatorPage.Maps} >
                         {NavigatorPage.Maps}
                     </MenuItem>
                 </Link>
-                <Link href="/ranks" variant="inherit" color="inherit" underline="none">
+                <Link href={getCachedRouteHref("ranks", "/ranks")} variant="inherit" color="inherit" underline="none">
                     <MenuItem disableRipple onClick={closeNavMenu} selected={navPage === NavigatorPage.Ranks} >
                         {NavigatorPage.Ranks}
                     </MenuItem>
                 </Link>
-                <Link href="/compare" variant="inherit" color="inherit" underline="none">
+                <Link href={getCachedRouteHref("compare", "/compare")} variant="inherit" color="inherit" underline="none">
                     <MenuItem disableRipple onClick={closeNavMenu} selected={navPage === NavigatorPage.Compare} >
                         {NavigatorPage.Compare}
                     </MenuItem>
@@ -215,6 +220,7 @@ function MainAppBar(props: IMainAppBarProps) {
     const { loggedInUser, isUserLoading, disableSettings } = props;
     const smallScreen = useMediaQuery("@media screen and (max-width: 480px)");
     const useAppMenu = useMediaQuery("@media screen and (max-width: 800px)");
+
     const onLogin = useCallback(async () => {
         const configuredAuthOrigin = import.meta.env.VITE_EXTERNAL_AUTH_ORIGIN as string | undefined;
         const isLocalDevelopment = import.meta.env.DEV && ["localhost", "127.0.0.1"].includes(window.location.hostname);

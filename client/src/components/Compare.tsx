@@ -25,6 +25,7 @@ import CompareChart from "./compare/CompareChart";
 import CompareTimesGrid from "./compare/CompareTimesGrid";
 import { useQueryClient } from "@tanstack/react-query";
 import { queries } from "../api/queries";
+import { useNavigationCacheState } from "../common/navigationCache";
 
 interface UserToTimes {
     [key: string]: {
@@ -50,7 +51,7 @@ function Compare() {
 
     const [game, setGameState] = useGame();
     const userSearch = useUserSearch();
-    const [selectedSlice, setSelectedSlice] = useState<number>();
+    const [selectedSlice, setSelectedSlice] = useNavigationCacheState<number | undefined>("compare.selectedSlice", undefined);
     const [, setPage] = useComparePage();
 
     const smallScreen = useMediaQuery("@media screen and (max-width: 600px)");
@@ -124,6 +125,8 @@ function Compare() {
         const defaultStyle = allowedStyles[0] ?? Style.autohop;
         if (isDuplicateEntry(entries, userId, defaultStyle)) return;
         setEntries([...entries, { userId, style: defaultStyle }]);
+        userSearch.setUserText("");
+        userSearch.setSelectedUser({ username: "" });
     };
 
     const setGame = useCallback((game: Game) => {
@@ -142,7 +145,7 @@ function Compare() {
         if (changed) {
             setEntriesRaw(serializeEntries(newEntries));
         }
-    }, [entries, setEntriesRaw, setGameState]);
+    }, [entries, setEntriesRaw, setGameState, setSelectedSlice]);
 
 
     useEffect(() => {

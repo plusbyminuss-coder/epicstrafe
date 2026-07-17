@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect } from "react";
 import { Autocomplete, autocompleteClasses, AutocompleteHighlightChangeReason, Box, darken, FilterOptionsState, InputAdornment, Popper, styled, TextField, Typography, useMediaQuery, useTheme } from "@mui/material";
 import { formatGame, formatTier, Map as StrafesMap } from "shared";
 import { List as VirtualizedList, RowComponentProps, ListImperativeAPI, useListCallbackRef } from "react-window";
@@ -7,6 +7,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import MapThumb from "../displays/MapThumb";
 import { getMapTierColor } from "../../common/colors";
 import { filterMapsBySearch } from "../../common/sort";
+import { useNavigationCacheState } from "../../common/navigationCache";
 
 
 
@@ -167,7 +168,7 @@ function MapSearch(props: MapSearchProps) {
     const { maps, selectedMap, setSelectedMap } = props;
 
     const [ listRef, setListRef ] = useListCallbackRef(null);
-    const [ inputValue, setIntputValue ] = useState("");
+    const [ inputValue, setIntputValue ] = useNavigationCacheState("maps.detail.search", "");
 
     const onSelect = useCallback((map: StrafesMap | undefined) => {
         setSelectedMap(map);
