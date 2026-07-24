@@ -111,30 +111,30 @@ function App() {
 
     const theme = useMemo(() => {
         const isLight = mode === "light";
-        const surface = isLight ? "#ffffff" : "#11121d";
-        const border = isLight ? "rgba(45, 32, 55, 0.12)" : "rgba(255, 255, 255, 0.12)";
+        const surface = isLight ? "#ffffff" : "#101112";
+        const border = isLight ? "rgba(18, 20, 22, 0.14)" : "rgba(255, 255, 255, 0.10)";
 
         return createTheme({
             palette: {
                 primary: {
-                    main: "#ff4f9a",
-                    light: "#ff86ba",
-                    dark: "#ce246d",
-                    contrastText: "#ffffff"
+                    main: isLight ? "#44505f" : "#aeb9c7",
+                    light: "#d7dee7",
+                    dark: "#303944",
+                    contrastText: isLight ? "#ffffff" : "#08090a"
                 },
                 secondary: {
-                    main: isLight ? "#087ea4" : "#5dd9ff",
-                    light: "#9beaff",
-                    dark: "#077a9e"
+                    main: isLight ? "#65758a" : "#8293a8",
+                    light: "#b9c4d1",
+                    dark: "#455366"
                 },
                 mode: mode,
                 background: {
-                    default: isLight ? "#f7f5fa" : "#080911",
+                    default: isLight ? "#f3f3f2" : "#08090a",
                     paper: surface
                 },
                 text: {
-                    primary: isLight ? "#211d28" : "#f7f5fb",
-                    secondary: isLight ? "#6d6676" : "#aaa7b8"
+                    primary: isLight ? "#181a1c" : "#eeeeec",
+                    secondary: isLight ? "#666a6e" : "#969a9f"
                 },
                 divider: border,
                 DataGrid: {
@@ -142,7 +142,7 @@ function App() {
                 }
             },
             shape: {
-                borderRadius: 16
+                borderRadius: 6
             },
             typography: {
                 fontFamily: '"Inter", "Roboto", system-ui, sans-serif',
@@ -157,21 +157,14 @@ function App() {
             components: {
                 MuiCssBaseline: {
                     styleOverrides: {
-                        html: { backgroundColor: isLight ? "#f4f3f7" : "#09090f" },
+                        html: { backgroundColor: isLight ? "#f3f3f2" : "#08090a" },
                         body: {
-                            backgroundColor: isLight ? "#f7f5fa" : "#080911",
-                            backgroundImage: isLight
-                                ? "radial-gradient(circle at 48% -12%, rgba(255, 79, 154, 0.13), transparent 36rem), radial-gradient(circle at 92% 35%, rgba(93, 217, 255, 0.08), transparent 30rem)"
-                                : "radial-gradient(circle at 48% -12%, rgba(255, 79, 154, 0.22), transparent 40rem), radial-gradient(circle at 92% 38%, rgba(93, 217, 255, 0.10), transparent 34rem)",
-                            backgroundAttachment: "fixed"
+                            backgroundColor: isLight ? "#f3f3f2" : "#08090a"
                         },
                         "#root": {
                             position: "relative",
                             isolation: "isolate",
-                            backgroundImage: isLight
-                                ? "linear-gradient(rgba(46, 32, 56, 0.022) 1px, transparent 1px), linear-gradient(90deg, rgba(46, 32, 56, 0.022) 1px, transparent 1px)"
-                                : "linear-gradient(rgba(255, 255, 255, 0.018) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.018) 1px, transparent 1px)",
-                            backgroundSize: "64px 64px"
+                            backgroundImage: "none"
                         },
                         "#root::before, #root::after": {
                             content: '\"\"',
@@ -181,21 +174,19 @@ function App() {
                             aspectRatio: "1",
                             borderRadius: "50%",
                             pointerEvents: "none",
-                            filter: "blur(100px)",
-                            opacity: isLight ? 0.22 : 0.28,
+                            filter: "blur(90px)",
+                            opacity: 0,
                             willChange: "transform"
                         },
                         "#root::before": {
                             top: "-22%",
                             left: "-13%",
-                            background: "#ff4f9a",
-                            animation: "ambientDriftA 18s ease-in-out infinite alternate"
+                            background: "transparent"
                         },
                         "#root::after": {
                             right: "-15%",
                             bottom: "-30%",
-                            background: isLight ? "#5dd9ff" : "#22bde9",
-                            animation: "ambientDriftB 22s ease-in-out infinite alternate"
+                            background: "transparent"
                         },
                         "@keyframes ambientDriftA": {
                             from: { transform: "translate3d(0, 0, 0) scale(0.9)" },
@@ -206,12 +197,10 @@ function App() {
                             to: { transform: "translate3d(-10vw, -8vh, 0) scale(0.86)" }
                         },
                         "@keyframes pageEnter": {
-                            from: { opacity: 0, transform: "translate3d(0, 8px, 0)", filter: "blur(3px)" },
-                            to: { opacity: 1, transform: "translate3d(0, 0, 0)", filter: "blur(0)" }
+                            from: { opacity: 0 }, to: { opacity: 1 }
                         },
                         "@keyframes cardEnter": {
-                            from: { opacity: 0, transform: "translate3d(0, 14px, 0) scale(0.985)" },
-                            to: { opacity: 1, transform: "translate3d(0, 0, 0) scale(1)" }
+                            from: { opacity: 0 }, to: { opacity: 1 }
                         },
                         "@keyframes glowPulse": {
                             "0%, 100%": { opacity: 0.55, transform: "scaleX(0.86)" },
@@ -222,7 +211,7 @@ function App() {
                             to: { opacity: 1, backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)" }
                         },
                         "::selection": {
-                            backgroundColor: alpha("#ec3b83", 0.32)
+                            backgroundColor: alpha(isLight ? "#44505f" : "#aeb9c7", 0.3)
                         },
                         "*": {
                             scrollbarWidth: "thin",
@@ -260,32 +249,11 @@ function App() {
                 MuiAppBar: {
                     styleOverrides: {
                         root: {
-                            width: "calc(100% - 32px)",
-                            maxWidth: "1450px",
-                            top: 12,
-                            margin: "0 auto 12px",
-                            color: isLight ? "#202027" : "#f4f4f6",
-                            backgroundColor: alpha(isLight ? "#ffffff" : "#10111a", isLight ? 0.72 : 0.62),
+                            color: isLight ? "#181a1c" : "#eeeeec",
+                            backgroundColor: isLight ? "#ffffff" : "#0b0c0d",
                             backgroundImage: "none",
-                            border: `1px solid ${border}`,
-                            borderRadius: 18,
-                            overflow: "hidden",
-                            boxShadow: isLight ? "0 14px 50px rgba(60, 32, 70, 0.10), inset 0 1px 0 rgba(255, 255, 255, 0.8)" : "0 18px 60px rgba(0, 0, 0, 0.38), 0 0 34px rgba(255, 79, 154, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.06)",
-                            backdropFilter: "blur(30px) saturate(180%)",
-                            WebkitBackdropFilter: "blur(30px) saturate(180%)",
-                            "&::after": {
-                                content: '\"\"',
-                                position: "absolute",
-                                inset: "0 14% auto",
-                                height: 1,
-                                background: "linear-gradient(90deg, transparent, rgba(255, 79, 154, 0.65), rgba(93, 217, 255, 0.45), transparent)"
-                            },
-                            "@media (max-width: 600px)": {
-                                width: "calc(100% - 16px)",
-                                top: 8,
-                                marginBottom: 8,
-                                borderRadius: 15
-                            }
+                            borderBottom: `1px solid ${border}`,
+                            boxShadow: "none"
                         }
                     }
                 },
@@ -299,36 +267,28 @@ function App() {
                 MuiPaper: {
                     styleOverrides: {
                         root: {
-                            backgroundColor: alpha(surface, isLight ? 0.70 : 0.56),
-                            backgroundImage: isLight ? "linear-gradient(145deg, rgba(255,255,255,0.75), rgba(255,255,255,0.28))" : "linear-gradient(145deg, rgba(255,255,255,0.045), rgba(255,255,255,0.008))",
+                            backgroundColor: surface,
+                            backgroundImage: "none",
                             border: `1px solid ${border}`,
-                            backdropFilter: "blur(26px) saturate(165%)",
-                            WebkitBackdropFilter: "blur(26px) saturate(165%)",
                             transition: "border-color 220ms ease, box-shadow 220ms ease, background-color 220ms ease",
-                            boxShadow: isLight
-                                ? "0 1px 2px rgba(20, 20, 30, 0.04), 0 14px 38px rgba(35, 20, 38, 0.055)"
-                                : "0 1px 2px rgba(0, 0, 0, 0.20), 0 18px 48px rgba(0, 0, 0, 0.26), inset 0 1px 0 rgba(255, 255, 255, 0.05)"
+                            boxShadow: "none"
                         }
                     }
                 },
                 MuiCard: {
                     styleOverrides: {
                         root: {
-                            backgroundColor: alpha(surface, isLight ? 0.70 : 0.56),
-                            backgroundImage: isLight ? "linear-gradient(145deg, rgba(255,255,255,0.76), rgba(255,255,255,0.3))" : "linear-gradient(145deg, rgba(255,255,255,0.05), rgba(255,255,255,0.008))",
+                            backgroundColor: surface,
+                            backgroundImage: "none",
                             border: `1px solid ${border}`,
-                            backdropFilter: "blur(26px) saturate(170%)",
-                            WebkitBackdropFilter: "blur(26px) saturate(170%)",
-                            boxShadow: isLight
-                                ? "0 14px 38px rgba(35, 20, 38, 0.055)"
-                                : "0 16px 42px rgba(0, 0, 0, 0.20), inset 0 1px 0 rgba(255, 255, 255, 0.035)"
+                            boxShadow: "none"
                         }
                     }
                 },
                 MuiButton: {
                     styleOverrides: {
                         root: {
-                            borderRadius: 12,
+                            borderRadius: 5,
                             textTransform: "none",
                             transition: "transform 180ms ease, background-color 180ms ease, border-color 180ms ease, box-shadow 180ms ease",
                             "&:active": {
@@ -343,7 +303,7 @@ function App() {
                 MuiIconButton: {
                     styleOverrides: {
                         root: {
-                            borderRadius: 12,
+                            borderRadius: 5,
                             transition: "transform 180ms ease, background-color 180ms ease, color 180ms ease",
                             "&:active": {
                                 transform: "scale(0.92)"
@@ -354,14 +314,14 @@ function App() {
                 MuiOutlinedInput: {
                     styleOverrides: {
                         root: {
-                            borderRadius: 13,
-                            backgroundColor: alpha(surface, isLight ? 0.68 : 0.48),
+                            borderRadius: 5,
+                            backgroundColor: surface,
                             transition: "border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease",
                             "&:hover .MuiOutlinedInput-notchedOutline": {
-                                borderColor: alpha("#ec3b83", 0.55)
+                                borderColor: alpha(isLight ? "#44505f" : "#aeb9c7", 0.6)
                             },
                             "&.Mui-focused": {
-                                boxShadow: `0 0 0 3px ${alpha("#ff4f9a", 0.15)}, 0 10px 32px ${alpha("#ff4f9a", 0.10)}`
+                                boxShadow: `0 0 0 2px ${alpha(isLight ? "#44505f" : "#aeb9c7", 0.16)}`
                             }
                         },
                         notchedOutline: {
@@ -373,8 +333,8 @@ function App() {
                     styleOverrides: {
                         paper: {
                             marginTop: 6,
-                            borderRadius: 14,
-                            boxShadow: isLight ? "0 18px 45px rgba(45, 25, 55, 0.14)" : "0 20px 52px rgba(0, 0, 0, 0.46), 0 0 28px rgba(255, 79, 154, 0.06)"
+                            borderRadius: 6,
+                            boxShadow: "none"
                         },
                         list: {
                             padding: 6
@@ -384,7 +344,7 @@ function App() {
                 MuiMenuItem: {
                     styleOverrides: {
                         root: {
-                            borderRadius: 8,
+                            borderRadius: 4,
                             margin: "2px 0"
                         }
                     }
@@ -392,16 +352,15 @@ function App() {
                 MuiDialog: {
                     styleOverrides: {
                         paper: {
-                            borderRadius: 20,
-                            boxShadow: isLight ? "0 28px 80px rgba(45, 25, 55, 0.18)" : "0 30px 90px rgba(0, 0, 0, 0.58), 0 0 44px rgba(255, 79, 154, 0.08)"
+                            borderRadius: 6,
+                            boxShadow: "none"
                         }
                     }
                 },
                 MuiChip: {
                     styleOverrides: {
                         root: {
-                            borderRadius: 9,
-                            backdropFilter: "blur(12px)",
+                            borderRadius: 5,
                             fontWeight: 600
                         }
                     }
@@ -411,17 +370,17 @@ function App() {
                         indicator: {
                             height: 3,
                             borderRadius: 3,
-                            boxShadow: "0 0 14px rgba(255, 79, 154, 0.65)"
+                            boxShadow: "none"
                         }
                     }
                 },
                 MuiLinearProgress: {
                     styleOverrides: {
                         root: {
-                            backgroundColor: alpha("#ff4f9a", 0.10)
+                            backgroundColor: alpha(isLight ? "#44505f" : "#aeb9c7", 0.10)
                         },
                         bar: {
-                            boxShadow: "0 0 16px rgba(255, 79, 154, 0.8)"
+                            boxShadow: "none"
                         }
                     }
                 },
@@ -443,7 +402,7 @@ function App() {
                             overflow: "hidden"
                         },
                         columnHeaders: {
-                            backgroundColor: isLight ? "#f7f7f9" : "#191922",
+                            backgroundColor: isLight ? "#eeeeec" : "#151718",
                             borderBottom: `1px solid ${border}`
                         },
                         columnHeader: {
@@ -455,7 +414,7 @@ function App() {
                         row: {
                             transition: "background-color 120ms ease",
                             "&:hover": {
-                                backgroundColor: alpha("#ec3b83", isLight ? 0.045 : 0.065)
+                                backgroundColor: alpha(isLight ? "#44505f" : "#aeb9c7", isLight ? 0.06 : 0.07)
                             }
                         },
                         footerContainer: {

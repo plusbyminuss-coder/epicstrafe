@@ -42,27 +42,18 @@ function Home() {
                     fontFamily: '"Goldman", sans-serif',
                     fontStyle: "normal",
                     letterSpacing: "-0.055em",
-                    background: (theme) => theme.palette.mode === "light"
-                        ? "linear-gradient(135deg, #211d28 25%, #ce246d 100%)"
-                        : "linear-gradient(135deg, #ffffff 22%, #ffc1dc 72%, #7ce2ff 120%)",
-                    backgroundClip: "text",
-                    WebkitBackgroundClip: "text",
-                    WebkitTextFillColor: "transparent",
-                    filter: "drop-shadow(0 10px 28px rgba(255, 79, 154, 0.18))"
+                    color: "text.primary"
                 }}
             >
                 strafes
             </Typography>
             <Box
-                width="54px"
-                height="3px"
-                borderRadius="3px"
+                width="36px"
+                height="2px"
                 mx="auto"
                 mt={2.25}
                 sx={{
-                    background: "linear-gradient(90deg, #ff4f9a, #ff86ba, #5dd9ff)",
-                    boxShadow: "0 0 16px rgba(255, 79, 154, 0.72)",
-                    animation: "glowPulse 3.2s ease-in-out infinite"
+                    background: "#aeb9c7"
                 }}
             />
         </Box>

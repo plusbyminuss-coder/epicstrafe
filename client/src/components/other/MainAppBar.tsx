@@ -70,10 +70,10 @@ function AppLinks(props: IAppMenuProps) {
         height: Math.min(appBarHeight - 14, 42),
         px: 1.75,
         color: selected ? "text.primary" : "text.secondary",
-        background: selected ? "linear-gradient(135deg, rgba(255, 79, 154, 0.18), rgba(93, 217, 255, 0.08))" : "transparent",
+        background: selected ? "rgba(255, 255, 255, 0.06)" : "transparent",
         fontWeight: selected ? 700 : 500,
-        textShadow: selected ? "0 0 18px rgba(255, 255, 255, 0.22)" : "none",
-        boxShadow: selected ? "0 8px 26px rgba(255, 79, 154, 0.12), inset 0 0 0 1px rgba(255, 79, 154, 0.17), inset 0 1px 0 rgba(255, 255, 255, 0.08)" : "none",
+        textShadow: "none",
+        boxShadow: selected ? "inset 0 0 0 1px rgba(255, 255, 255, 0.06)" : "none",
         transition: "color 200ms ease, background-color 200ms ease, box-shadow 200ms ease, transform 200ms ease",
         "&::after": {
             content: '\"\"',
@@ -83,16 +83,16 @@ function AppLinks(props: IAppMenuProps) {
             width: selected ? 20 : 0,
             height: 2,
             borderRadius: 2,
-            background: "linear-gradient(90deg, #ff4f9a, #ff86ba)",
-            boxShadow: selected ? "0 0 14px rgba(255, 79, 154, 0.85)" : "none",
+            background: "#aeb9c7",
+            boxShadow: "none",
             transform: "translateX(-50%)",
             transition: "width 220ms cubic-bezier(0.22, 1, 0.36, 1)"
         },
         "&:hover": {
             color: "text.primary",
             backgroundColor: selected ? undefined : "action.hover",
-            boxShadow: selected ? "0 8px 26px rgba(255, 79, 154, 0.14), inset 0 0 0 1px rgba(255, 79, 154, 0.2)" : "none",
-            transform: "translateY(-1px)"
+            boxShadow: "none",
+            transform: "none"
         }
     });
 
@@ -112,11 +112,10 @@ function AppLinks(props: IAppMenuProps) {
             p={0.5}
             border={1}
             borderColor="divider"
-            borderRadius="14px"
+            borderRadius="6px"
             sx={{
-                background: "linear-gradient(135deg, rgba(255, 255, 255, 0.045), rgba(255, 255, 255, 0.015))",
-                backdropFilter: "blur(18px) saturate(150%)",
-                boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 8px 28px rgba(0, 0, 0, 0.08)"
+                background: "transparent",
+                boxShadow: "none"
             }}
         >
             <Button href={userLink} {...prefetchProps("users")} disableRipple
@@ -243,13 +242,12 @@ function MainAppBar(props: IMainAppBarProps) {
                             height="36px"
                             width="36px"
                             sx={{
-                                borderRadius: "11px",
-                                filter: "drop-shadow(0 6px 14px rgba(255, 79, 154, 0.30))",
-                                boxShadow: "inset 0 1px 0 rgba(255, 255, 255, 0.2)",
-                                transition: "transform 260ms cubic-bezier(0.22, 1, 0.36, 1), filter 260ms ease",
+                                borderRadius: "5px",
+                                filter: "grayscale(1)",
+                                opacity: 0.9,
+                                transition: "opacity 180ms ease",
                                 "&:hover": {
-                                    transform: "translateY(-2px) rotate(-3deg) scale(1.04)",
-                                    filter: "drop-shadow(0 9px 18px rgba(255, 79, 154, 0.48))"
+                                    opacity: 1
                                 }
                             }}
                         />
@@ -259,7 +257,7 @@ function MainAppBar(props: IMainAppBarProps) {
                                 fontFamily: '"Goldman", sans-serif',
                                 fontWeight: 700,
                                 letterSpacing: "-0.035em",
-                                textShadow: "0 0 22px rgba(255, 79, 154, 0.22)"
+                                textShadow: "none"
                             }}
                         >
                             strafes
