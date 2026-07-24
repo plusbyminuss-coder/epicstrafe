@@ -41,8 +41,7 @@ function Home() {
                     color: "text.primary",
                     fontFamily: '"Goldman", sans-serif',
                     fontStyle: "normal",
-                    letterSpacing: "-0.055em",
-                    color: "text.primary"
+                    letterSpacing: "-0.055em"
                 }}
             >
                 strafes
